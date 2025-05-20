@@ -8,13 +8,10 @@ import MarkdownRenderer from "./MarkdownRenderer";
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
+  theme: "dark"|"light"
 }
 
-export default function MarkdownEditor({
-  value,
-  onChange,
-  theme = "light", // Default theme is light
-}: MarkdownEditorProps & { theme: "dark" | "light" }) {
+const MarkdownEditor:React.FC<MarkdownEditorProps> = ({value, onChange, theme})=>{
   const [isPreview, setIsPreview] = useState(false);
 
   // Function to handle the Tab key press
@@ -203,3 +200,5 @@ export default function MarkdownEditor({
     </div>
   );
 }
+
+export default MarkdownEditor;
