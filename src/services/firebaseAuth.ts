@@ -2,11 +2,11 @@ import {
   getAuth, 
   createUserWithEmailAndPassword, 
   signInWithEmailAndPassword, 
-  // signInWithPopup, 
+  signInWithPopup, 
   GoogleAuthProvider, 
   updateProfile,
   signOut as firebaseSignOut,
-  signInWithRedirect
+  // signInWithRedirect
 } from "firebase/auth";
 import { app } from "./firebase"; // your existing firebase.ts
 
@@ -37,7 +37,7 @@ export async function signInWithEmail(
 
 // OAuth sign-in
 export async function signInWithGoogle() {
-  const{user} = await signInWithRedirect(auth, googleProvider);
+  const{user} = await signInWithPopup(auth, googleProvider);
   return user;
 }
 

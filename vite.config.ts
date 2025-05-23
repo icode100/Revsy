@@ -12,4 +12,11 @@ export default defineConfig({
     tailwindcss(),
     svgr()
   ],
+  server: {
+    headers: {
+      // Remove COOP/COEP headers to avoid popup issues
+      'Cross-Origin-Opener-Policy': '',
+      'Cross-Origin-Embedder-Policy': '',
+    }
+  }
 })

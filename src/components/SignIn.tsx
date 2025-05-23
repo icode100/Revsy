@@ -38,10 +38,9 @@ const SignIn: React.FC<SignInProps> = ({ theme, auth, setAuth, setSignIn, isSign
         try {
             setLoading(true);
             setError(null);
-            const{user} = await signInWithGoogle();
+            await signInWithGoogle();
             closeModal();
             setAuth(false);
-            console.log(user);
 
         } catch (e: unknown) {
             if (e instanceof Error) {
