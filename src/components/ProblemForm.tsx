@@ -7,7 +7,7 @@ interface ProblemFormProps {
     theme: "dark" | "light";
 }
 
-const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
+const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [url, setUrl] = useState('');

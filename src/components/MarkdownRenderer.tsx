@@ -5,21 +5,10 @@ import remarkMath from "remark-math";
 import remarkBreaks from "remark-breaks";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
-import { PrismLight as SyntaxHighlighter } from "react-syntax-highlighter";
-import { oneDark, oneLight } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import jsx from "react-syntax-highlighter/dist/esm/languages/prism/jsx";
-import typescript from "react-syntax-highlighter/dist/esm/languages/prism/typescript";
-import python from "react-syntax-highlighter/dist/esm/languages/prism/python";
-import java from "react-syntax-highlighter/dist/esm/languages/prism/java";
-import cpp from "react-syntax-highlighter/dist/esm/languages/prism/cpp";
 import "katex/dist/katex.min.css";
+import { CodeBlock, dracula, github } from "react-code-blocks";
 
 // Register the languages you want to use
-SyntaxHighlighter.registerLanguage("jsx", jsx);
-SyntaxHighlighter.registerLanguage("typescript", typescript);
-SyntaxHighlighter.registerLanguage("python", python);
-SyntaxHighlighter.registerLanguage("java", java);
-SyntaxHighlighter.registerLanguage("cpp", cpp);
 
 interface MarkdownRendererProps {
     content: string;
@@ -69,16 +58,13 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
                         const language = match ? match[1] : "";
 
                         return !inline && match ? (
-                            <SyntaxHighlighter
-                                // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-                                // @ts-expect-error
-                                style={theme === "dark" ? oneDark : oneLight} 
-                                language={language}
-                                PreTag="div"
-                                {...(props as React.HTMLProps<HTMLDivElement>)}
-                            >
-                                {String(children).replace(/\n$/, "")}
-                            </SyntaxHighlighter>
+                            <div className='text-sm'>
+                                <CodeBlock
+                                    text={String(children).replace(/\n$/, "")}
+                                    language={language}
+                                    theme={theme === "dark" ? dracula : github}
+                                />
+                            </div>
                         ) : (
                             <code className={className} {...props}>
                                 {children}
