@@ -1,21 +1,28 @@
 import React, { useState } from 'react'
 import {
     signUpWithEmail,
-    signInWithGoogle
+    signInWithGoogle,
+    signInWithEmail,
+    signOut
 } from "../services/firebaseAuth";
 import { useModal } from './ModalContext';
 import GoogleLogo from '/google.png?url';
 
+type User = Awaited<ReturnType<typeof signInWithEmail>>;
+type nulluser = Awaited<ReturnType<typeof signOut>>;
+
+
 interface SignUpProps {
     theme: "dark" | "light";
-    auth: boolean
-    setAuth: (auth: boolean) => void
+    isauth: boolean
+    setIsauth: (isauth: boolean) => void
     isSignIn: boolean,
     setSignIn: (isSignIn: boolean) => void
+    setUser: React.Dispatch<React.SetStateAction<User | null | nulluser>>;
 }
 
 
-const SignUp: React.FC<SignUpProps> = ({ theme, auth, setAuth, setSignIn, isSignIn }) => {
+const SignUp: React.FC<SignUpProps> = ({ theme, isauth, setIsauth, setSignIn, isSignIn, setUser }) => {
     const [info, setInfo] = useState({
         name: "",
         dob: "",
@@ -33,7 +40,7 @@ const SignUp: React.FC<SignUpProps> = ({ theme, auth, setAuth, setSignIn, isSign
         }));
     };
     const { closeModal, openModal } = useModal();
-    if (auth) {
+    if (isauth) {
         openModal();
     } else {
         closeModal();
@@ -42,9 +49,10 @@ const SignUp: React.FC<SignUpProps> = ({ theme, auth, setAuth, setSignIn, isSign
         try {
             setLoading(true);
             setError(null);
-            await signInWithGoogle();
+            const user = await signInWithGoogle();
+            setUser(user);
             closeModal();
-            setAuth(false);
+            setIsauth(false);
         } catch (e: unknown) {
             if (e instanceof Error) {
                 setError(e.message);
@@ -63,9 +71,10 @@ const SignUp: React.FC<SignUpProps> = ({ theme, auth, setAuth, setSignIn, isSign
         try {
             setLoading(true);
             setError(null);
-            await signUpWithEmail(info.name, info.email, info.pw);
+            const user = await signUpWithEmail(info.name, info.email, info.pw);
+            setUser(user);
             closeModal();
-            setAuth(false);
+            setIsauth(false);
         } catch (e: unknown) {
             if (e instanceof Error) {
                 setError(e.message);

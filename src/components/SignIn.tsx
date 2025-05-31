@@ -1,20 +1,28 @@
-import React, { useState } from 'react'
+import React, {useState } from 'react'
 import {
     signInWithEmail,
-    signInWithGoogle
+    signInWithGoogle,
+    signOut
 } from "../services/firebaseAuth";
 import { useModal } from './ModalContext';
 import GoogleLogo from "/google.png?url"
+// import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
+// import { auth } from "../services/firebaseAuth"; // Import the auth instance
+
+type User = Awaited<ReturnType<typeof signInWithEmail>>;
+type nulluser = Awaited<ReturnType<typeof signOut>>;
+
 interface SignInProps {
     theme: "dark" | "light";
-    auth: boolean
-    setAuth: (auth: boolean) => void
+    isauth: boolean
+    setIsauth: (isauth: boolean) => void
     isSignIn: boolean,
     setSignIn: (isSignIn: boolean) => void
+    setUser: React.Dispatch<React.SetStateAction<User | null | nulluser>>;
 }
 
 
-const SignIn: React.FC<SignInProps> = ({ theme, auth, setAuth, setSignIn, isSignIn }) => {
+const SignIn: React.FC<SignInProps> = ({ theme, isauth, setIsauth, setSignIn, isSignIn, setUser }) => {
     const [info, setInfo] = useState({
         email: "",
         pw: "",
@@ -29,35 +37,38 @@ const SignIn: React.FC<SignInProps> = ({ theme, auth, setAuth, setSignIn, isSign
         }));
     };
     const { closeModal, openModal } = useModal();
-    if (auth) {
+    console.log(isauth);
+    if(isauth){
         openModal();
-    } else {
+    }else{
         closeModal();
     }
+
     const handleGoogleLogin = async () => {
         try {
             setLoading(true);
             setError(null);
-            await signInWithGoogle();
+            const user = await signInWithGoogle();
+            setUser(user);
+            console.log(typeof user)
             closeModal();
-            setAuth(false);
-
+            setIsauth(false);
         } catch (e: unknown) {
             if (e instanceof Error) {
                 setError(e.message);
             } else {
                 setError('An unknown error occurred')
             }
-
         }
     }
     const handleSubmit = async () => {
         try {
             setLoading(true);
             setError(null);
-            await signInWithEmail(info.email, info.pw);
+            const user = await signInWithEmail(info.email, info.pw);
+            setUser(user);
             closeModal();
-            setAuth(false);
+            setIsauth(false);
         } catch (e: unknown) {
             if (e instanceof Error) {
                 setError(e.message);
@@ -135,7 +146,7 @@ const SignIn: React.FC<SignInProps> = ({ theme, auth, setAuth, setSignIn, isSign
                 <span>Sign in with Google</span>
             </button>
 
-            <button className='w-full bg-transperant hover:underline items-center' onClick={() => setSignIn(!isSignIn)}> Already Have an account? SignIn</button>
+            <button className='w-full bg-transperant hover:underline items-center' onClick={() => setSignIn(!isSignIn)}> Don't have an account? Create One</button>
 
         </form>
     );

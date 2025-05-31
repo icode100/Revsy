@@ -1,15 +1,21 @@
 import React, { useState } from 'react'
 import SignIn from './SignIn'
 import SignUp from './SignUp';
- 
+import { signInWithEmail, signOut } from '../services/firebaseAuth';
+type User = Awaited<ReturnType<typeof signInWithEmail>>;
+type nulluser = Awaited<ReturnType<typeof signOut>>;
+
+
+
 interface AuthModalProps {
     theme: "dark" | "light";
-    auth: boolean
-    setAuth: (auth: boolean) => void
+    isauth: boolean
+    setIsauth: (auth: boolean) => void
+    setUser: React.Dispatch<React.SetStateAction<User | null | nulluser>>;
 }
 
 
-const AuthModal: React.FC<AuthModalProps> = ({ theme, auth, setAuth }) => {
+const AuthModal: React.FC<AuthModalProps> = ({ theme, isauth, setIsauth, setUser}) => {
     const [isSignIn,setSignIn] = useState(true);
     return (
         <div className={`rounded-lg shadow-lg p-6 w-full max-w-lg max-h-screen overflow-y-auto ${theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-black'
@@ -18,12 +24,12 @@ const AuthModal: React.FC<AuthModalProps> = ({ theme, auth, setAuth }) => {
                 isSignIn?(
                     <div>
                         <h2 className="text-xl font-bold mb-4">SignIn</h2>
-                        <SignIn theme={theme} auth={auth} setAuth={setAuth} isSignIn={isSignIn} setSignIn={setSignIn}/>
+                        <SignIn theme={theme} isauth={isauth} setIsauth={setIsauth} isSignIn={isSignIn} setSignIn={setSignIn} setUser={setUser}/>
                     </div>
                 ):(
                     <div>
                         <h2 className="text-xl font-bold mb-4">SignUp</h2>
-                        <SignUp theme={theme} auth={auth} setAuth={setAuth} isSignIn={isSignIn} setSignIn={setSignIn}/>
+                        <SignUp theme={theme} isauth={isauth} setIsauth={setIsauth} isSignIn={isSignIn} setSignIn={setSignIn} setUser={setUser}/>
                     </div>
                 )
             }

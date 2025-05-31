@@ -6,11 +6,22 @@ import {
   GoogleAuthProvider, 
   updateProfile,
   signOut as firebaseSignOut,
+  setPersistence,
+  browserLocalPersistence
   // signInWithRedirect
 } from "firebase/auth";
 import { app } from "./firebase"; // your existing firebase.ts
 
 export const auth = getAuth(app);
+
+setPersistence(auth, browserLocalPersistence)
+  .then(() => {
+    console.log("Firebase Auth persistence set to LOCAL.");
+  })
+  .catch((error) => {
+    console.error("Error setting Firebase Auth persistence:", error);
+  });
+
 
 // OAuth providers
 export const googleProvider = new GoogleAuthProvider();
@@ -42,6 +53,7 @@ export async function signInWithGoogle() {
 }
 
 // Sign-out
-export function signOut() {
-  return firebaseSignOut(auth);
+export async function signOut() {
+  const user = await firebaseSignOut(auth);
+  return user
 }

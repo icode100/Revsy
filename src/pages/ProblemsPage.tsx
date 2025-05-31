@@ -36,7 +36,7 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme }) => {
 
       {
         problemComponents.length > 0 ? (
-          <div className="grid grid-cols-7 gap-2 mt-21">
+          <div className="grid grid-cols-7 gap-2 mt-30">
             <div className="col-start-2 col-span-5">
               {problemComponents.map((id) => (
                 <div key={id} className="mb-4">
@@ -76,7 +76,7 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme }) => {
             </div>
           </div>
         ) : (
-          <div className=' mt-10 place-items-center text-9xl bold'>
+          <div className=' mt-20 place-items-center text-9xl bold'>
             <div className="">
               <button
                 className={`px-100 py-90 rounded-full ${theme === 'dark' ? ' text-white border-2 border-solid-black hover:border-dotted' : 'text-gray-900 border-2 border-solid-black hover:border-dotted' 

@@ -17,11 +17,13 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
 
     const descriptionRef = useRef<HTMLTextAreaElement>(null);
 
+
+
     const handleFetchDescription = async () => {
         try {
             setLoading(true);
             setError(null);
-
+            if(url.length===0) throw new Error("url cannot be empty")
             const problem = await fetchLeetCodeProblem(url);
             setTitle(problem.title);
             setDescription(problem.description);
@@ -62,6 +64,7 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
             descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`; // Adjust height
         }
     }, [description]);
+    
 
     return (
         <form
@@ -82,6 +85,7 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
                         id="problem-url"
                         type="text"
                         value={url}
+                        required
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="Enter LeetCode problem URL"
                         className={`flex-1 px-4 py-2 rounded border ${
@@ -93,7 +97,7 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
                     <button
                         type="button"
                         onClick={handleFetchDescription}
-                        disabled={!url || loading}
+                        disabled={loading}
                         className={`px-4 py-2 rounded ${
                             loading
                                 ? "bg-gray-400 cursor-not-allowed"

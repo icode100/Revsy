@@ -46,10 +46,10 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme }) => {
     return (
         <div
             className={`min-h-screen p-4 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
-                } ${concepts.length === 0 ? "place-items-center" : ""}`}
+                } ${concepts.length === 0 ? "place-items-center" : ""} `}
         >
             {concepts.length > 0 ? (
-                <div className="grid grid-cols-11 gap-4 p-4 mt-21">
+                <div className={`mt-30 grid grid-cols-11 gap-4 p-4 ${globalModalOpen ? "blur-2xl" : ""}`}>
                     <div className="col-span-2"></div>
                     <div className="col-span-7">
                         <div className="grid grid-cols-19">
@@ -81,7 +81,7 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme }) => {
                 </div>
 
             ) : (
-                <div className=' mt-10 place-items-center text-9xl bold'>
+                <div className='mt-20 place-items-center text-9xl bold'>
                     <div className="">
                         <button
                             className={`px-100 py-90 rounded-full ${theme === 'dark' ? ' text-white border-2 border-solid-black hover:border-dotted' : 'text-gray-900 border-2 border-solid-black hover:border-dotted'

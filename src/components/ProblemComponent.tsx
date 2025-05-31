@@ -1,5 +1,5 @@
 // ProblemComponent.tsx
-import React, { useState } from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import Accordion from '../components/Accordion';
 import MarkdownEditor from '../components/MarkdownEditor';
 import MarkdownRenderer from '../components/MarkdownRenderer';
@@ -25,6 +25,13 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ theme, editMode }) 
     const [note, setNote] = useState('Add your notes here');
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { globalModalOpen, openModal, closeModal } = useModal();
+    // useEffect(
+    //     ()=>{
+    //         if(isModalOpen) openModal();
+    //         else closeModal();
+    //     },[closeModal,isModalOpen, openModal]
+    // )
+
     const addProblem = (problem: { title: string; description: string; url: string }) => {
         setProblems([
             ...problems,
@@ -47,7 +54,17 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ theme, editMode }) 
     const deleteProblem = (id: number) => {
         setProblems(problems.filter((problem) => problem.id !== id));
     };
-
+    const formRef = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (isModalOpen && formRef.current && !formRef.current.contains(event.target as Node)) {
+                setIsModalOpen(false);
+                closeModal();
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, [closeModal, isModalOpen, openModal]);
 
     return (
         <div>
@@ -56,19 +73,18 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ theme, editMode }) 
             {isModalOpen && (
                 <div
                     className="fixed inset-0 bg-opacity-50 flex items-center justify-center z-50"
-                    onClick={() => {setIsModalOpen(false); closeModal();}}
                 >
                     <div
                         className={`rounded-lg shadow-lg p-6 w-full max-w-lg max-h-screen overflow-y-auto ${theme === 'dark' ? 'bg-gray-700 text-white' : 'bg-gray-50 text-black'
                             }`}
-                        onClick={(e) => e.stopPropagation()}
+                        onClick={(e) => e.stopPropagation()} ref={formRef}
                     >
                         <h2 className="text-xl font-bold mb-4">Add New Problem</h2>
                         <ProblemForm onSubmit={addProblem} theme={theme} />
                         <button
                             className={`mt-4 px-4 py-2 rounded ${theme === 'dark' ? 'bg-red-600 hover:bg-red-700' : 'bg-red-500 hover:bg-red-600'
                                 } text-white`}
-                            onClick={() => { setIsModalOpen(false); closeModal(); }}
+                            onClick={() => { setIsModalOpen(false); closeModal();}}
                         >
                             <span className="material-icons">close</span>
                         </button>
@@ -159,16 +175,16 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ theme, editMode }) 
                                         )}
                                     </div>
                                 ))
-                        ):(
-                            <div className={`text-center ${theme==="dark"?"bg-gray-700":"bg-white"} py-3 rounded-lg`}>
-                                Add your problems here
-                            </div>
-                        )
+                            ) : (
+                                <div className={`text-center ${theme === "dark" ? "bg-gray-700" : "bg-white"} py-3 rounded-lg`}>
+                                    Add your problems here
+                                </div>
+                            )
                         }
 
                     </div>
                     {/* notes column */}
-                    <div className={`col-span-5 ${theme==="dark"?"bg-gray-700":"bg-white"} py-3 rounded-lg`}>
+                    <div className={`col-span-5 ${theme === "dark" ? "bg-gray-700" : "bg-white"} py-3 rounded-lg`}>
                         {/* Shared Note */}
                         <div className="place-items-center">
                             {editMode ? (
@@ -179,7 +195,7 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ theme, editMode }) 
                                 </div>
                             )}
                         </div>
-                    </div>                    
+                    </div>
                 </div>
                 {/* add problem button */}
                 {editMode && (
