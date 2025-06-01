@@ -8,31 +8,63 @@ import MarkdownRenderer from "./MarkdownRenderer";
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
-  theme: "dark"|"light"
+  theme: "dark" | "light"
 }
 
-const MarkdownEditor:React.FC<MarkdownEditorProps> = ({value, onChange, theme})=>{
+const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme }) => {
   const [isPreview, setIsPreview] = useState(false);
 
   // Function to handle the Tab key press
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (e.key === "Tab") {
-      e.preventDefault(); // Prevent the default tab behavior (focus change)
-      const textarea = e.target as HTMLTextAreaElement;
-      const start = textarea.selectionStart;
-      const end = textarea.selectionEnd;
+    const textarea = e.target as HTMLTextAreaElement;
+    const { selectionStart, selectionEnd, value: text } = textarea;
 
-      // Insert 4 spaces at the cursor position
+    // Handle Tab key for indentation
+    if (e.key === "Tab") {
+      e.preventDefault();
       const updatedValue =
-        value.substring(0, start) + "    " + value.substring(end);
+        text.substring(0, selectionStart) + "    " + text.substring(selectionEnd);
+      onChange(updatedValue);
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = selectionStart + 4;
+      }, 0);
+      return;
+    }
+
+    // Handle Enter key for auto-bullet or indent
+    if (e.key === "Enter") {
+      e.preventDefault();
+
+      // Get current line until cursor
+      const beforeCursor = text.substring(0, selectionStart);
+      const afterCursor = text.substring(selectionEnd);
+      const lines = beforeCursor.split("\n");
+      const currentLine = lines[lines.length - 1];
+
+      const indentMatch = currentLine.match(/^(\s*)/); // leading spaces/tabs
+      const bulletMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s+/);
+
+      const indent = indentMatch ? indentMatch[1] : "";
+      const bulletPrefix = bulletMatch ? `${bulletMatch[2]} ` : "";
+
+      // If it's an empty bullet, remove the prefix instead of continuing it
+      const isEmptyBullet = bulletMatch && currentLine.trim() === bulletPrefix.trim();
+
+      const insert =
+        "\n" + (isEmptyBullet ? indent : indent + bulletPrefix);
+
+      const updatedValue = beforeCursor + insert + afterCursor;
+
       onChange(updatedValue);
 
-      // Move the cursor to the right after the inserted spaces
+      // Set cursor after inserted prefix
       setTimeout(() => {
-        textarea.selectionStart = textarea.selectionEnd = start + 4;
+        const pos = selectionStart + insert.length;
+        textarea.selectionStart = textarea.selectionEnd = pos;
       }, 0);
     }
   };
+
 
   // Add list button handler
   const handleAddList = (type: "bullet" | "number" | "alphabet") => {
@@ -183,7 +215,7 @@ const MarkdownEditor:React.FC<MarkdownEditorProps> = ({value, onChange, theme})=
 
       <div className="p-4">
         {isPreview ? (
-          <MarkdownRenderer content={value} theme={theme}/>
+          <MarkdownRenderer content={value} theme={theme} />
         ) : (
           <textarea
             value={value}

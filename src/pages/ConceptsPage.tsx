@@ -1,8 +1,22 @@
-import React, { useState } from 'react';
+/* eslint-disable @typescript-eslint/ban-ts-comment */
+import React, { useState, useEffect } from 'react';
 import ConceptComponent from '../components/ConceptComponent';
 import { useModal } from '../components/ModalContext';
+import {
+    addComponentToPage,
+    getComponentsOfPage,
+    updateComponent,
+    deleteComponent,
+} from '../services/firestore';
+import type { signInWithEmail, signOut } from '../services/firebaseAuth';
+
+type User = Awaited<ReturnType<typeof signInWithEmail>>;
+type nulluser = Awaited<ReturnType<typeof signOut>>;
+
 interface ConceptPageProps {
     theme: 'dark' | 'light';
+    pageId: number
+    user: User | null | nulluser;
 }
 
 interface Concept {
@@ -11,37 +25,58 @@ interface Concept {
     description: string;
 }
 
-const ConceptsPage: React.FC<ConceptPageProps> = ({ theme }) => {
+const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user }) => {
     const [concepts, setConcepts] = useState<Concept[]>([]);
     const { globalModalOpen } = useModal();
-    const handleAddConcept = () => {
-        const newConcept: Concept = {
-            id: Date.now(),
+    const [ConceptNumber, setConceptNumber] = useState<number>(0);
+    const handleAddConcept = async () => {
+        if (!user || !pageId) return;
+        const newComponent = {
             title: 'Edit your title here',
             description: 'Edit your description here',
+            componentType: 'concept',
         };
-        setConcepts((prevConcepts) => [...prevConcepts, newConcept]);
+        setConcepts(prev => [...prev, { ...newComponent, id: Date.now() }]); // OR include doc ID
+        await addComponentToPage(user.uid, pageId, newComponent);
     };
 
-    const handleDeleteConcept = (id: number) => {
-        setConcepts((prevConcepts) => prevConcepts.filter((concept) => concept.id !== id));
+
+    useEffect(() => {
+        const loadConcepts = async () => {
+            if (!user || !pageId) return;
+            const components = await getComponentsOfPage(user.uid, pageId);
+            const transformed = components.map(c => ({
+                // @ts-expect-error
+                id: c.id,
+                // @ts-expect-error
+                title: c.title,
+                // @ts-expect-error
+                description: c.description,
+            }));
+            setConcepts(transformed);
+        };
+
+        loadConcepts();
+        setConceptNumber(concepts.length);
+    }, [user, pageId, setConceptNumber, concepts.length]);
+
+
+    const handleDeleteConcept = async (id: number) => {
+        if (!user || !pageId) return;
+        await deleteComponent(user.uid, pageId, String(id));
+        setConcepts(prev => prev.filter(c => c.id !== id));
+        setConceptNumber(prev => prev - 1);
     };
 
-    const handleTitleChange = (id: number, newTitle: string) => {
-        setConcepts((prevConcepts) =>
-            prevConcepts.map((concept) =>
-                concept.id === id ? { ...concept, title: newTitle } : concept
-            )
+
+    const updateConceptField = async (id: number, field: 'title' | 'description', value: string) => {
+        if (!user || !pageId) return;
+        setConcepts(prev =>
+            prev.map(c => c.id === id ? { ...c, [field]: value } : c)
         );
+        await updateComponent(user.uid, pageId, String(id), { [field]: value });
     };
 
-    const handleDescriptionChange = (id: number, newDescription: string) => {
-        setConcepts((prevConcepts) =>
-            prevConcepts.map((concept) =>
-                concept.id === id ? { ...concept, description: newDescription } : concept
-            )
-        );
-    };
 
     return (
         <div
@@ -52,6 +87,7 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme }) => {
                 <div className={`mt-30 grid grid-cols-11 gap-4 p-4 ${globalModalOpen ? "blur-2xl" : ""}`}>
                     <div className="col-span-2"></div>
                     <div className="col-span-7">
+                        <h4> The number of concepts being {ConceptNumber}</h4>
                         <div className="grid grid-cols-19">
                             <div className="space-y-4 col-span-19">
                                 {concepts.map((concept) => (
@@ -62,8 +98,8 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme }) => {
                                         description={concept.description}
                                         theme={theme}
                                         onDelete={handleDeleteConcept}
-                                        onTitleChange={handleTitleChange}
-                                        onDescriptionChange={handleDescriptionChange}
+                                        onTitleChange={(id, newTitle) => updateConceptField(id, 'title', newTitle)}
+                                        onDescriptionChange={(id, newDesc) => updateConceptField(id, 'description', newDesc)}
                                     />
                                 ))}
                             </div>

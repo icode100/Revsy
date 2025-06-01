@@ -18,7 +18,7 @@ interface MarkdownRendererProps {
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) => {
     // You can use a markdown library like 'marked' or 'react-markdown' here
     return (
-        <div className="prose prose-slate max-w-none">
+        <div className="prose prose-slate max-w-none break-words whitespace-pre-wrap p-4">
             <ReactMarkdown
                 remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
                 rehypePlugins={[rehypeKatex]}
@@ -41,9 +41,21 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
                     h6: ({ node, ...props }) => (
                         <h6 className="text-base font-bold" {...props} />
                     ),
-                    ul: ({ node, ...props }) => (
-                        <ul className="list-disc ml-6" {...props} />
-                    ),
+                    ul: ({ node, children, ...props }) => {
+                        const depth = node?.position?.start?.column ?? 0;
+                        const levelClass =
+                            depth < 5
+                                ? 'list-disc'
+                                : depth < 9
+                                    ? 'list-[*]'
+                                    : 'list-[+]';
+
+                        return (
+                            <ul className={`${levelClass} ml-6 pl-2`} {...props}>
+                                {children}
+                            </ul>
+                        );
+                    },
                     ol: ({ node, ...props }) => (
                         <ol className="list-decimal ml-6" {...props} />
                     ),
@@ -66,7 +78,10 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
                                 />
                             </div>
                         ) : (
-                            <code className={className} {...props}>
+                            <code
+                                className={`${className || ''} break-words whitespace-pre-wrap rounded px-1 py-0.5 bg-gray-100 dark:bg-gray-800`}
+                                {...props}
+                            >
                                 {children}
                             </code>
                         );

@@ -16,7 +16,7 @@ const Accordion: React.FC<AccordionProps> = ({ title, description, theme }) => {
         <div className="accordion border border-gray-300 rounded-lg shadow-md overflow-hidden">
             <button
                 className={`accordion-header w-full flex justify-between items-center text-left px-4 py-3 font-semibold text-white transition-all duration-300 ${
-                    isOpen ? 'bg-blue-600' : 'bg-blue-500 hover:bg-blue-600'
+                    isOpen ? 'bg-emerald-600' : 'bg-emerald-500 hover:bg-emerald-600'
                 }`}
                 onClick={toggleAccordion}
             >

@@ -95,4 +95,3 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme }) => {
 };
 
 export default ProblemsPage;
-

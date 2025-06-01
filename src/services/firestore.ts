@@ -9,7 +9,7 @@ import {
   getDocs,
   addDoc,
   serverTimestamp,
-  FieldValue,
+  getDoc,
 } from 'firebase/firestore';
 
 export type PageDef = {
@@ -68,7 +68,7 @@ export async function updateComponent(
   userId: string,
   pageId: number,
   componentId: string,
-  updatedData: Record<string, FieldValue>
+  updatedData: Record<string, string>
 ) {
   const ref = doc(
     db,
@@ -110,4 +110,19 @@ export async function deletePageAndComponents(userId: string, pageId: number) {
 
   // Step 2: delete the page itself
   await deleteDoc(doc(db, "users", userId, "pages", String(pageId)));
+}
+
+export async function saveUserTheme(userId: string, theme: "light" | "dark") {
+  const userRef = doc(db, "users", userId);
+  await setDoc(userRef, { theme }, { merge: true }); // merge keeps other data
+}
+
+
+export async function getUserTheme(userId: string): Promise<"light" | "dark"> {
+  const userRef = doc(db, "users", userId);
+  const snap = await getDoc(userRef);
+  if (snap.exists()) {
+    return snap.data().theme || "light"; // fallback
+  }
+  return "light";
 }

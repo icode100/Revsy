@@ -13,6 +13,13 @@ import ConceptsPage from './pages/ConceptsPage';
 import HeaderBar from './components/HeaderBar';
 import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
 import { auth } from "./services/firebaseAuth"; // Import the auth instance
+import {
+  addPageToDB,
+  getAllPages,
+  deletePageAndComponents,
+  getUserTheme
+} from './services/firestore';
+
 
 type User = Awaited<ReturnType<typeof signInWithEmail>>;
 type nulluser = Awaited<ReturnType<typeof signOut>>;
@@ -20,43 +27,67 @@ type nulluser = Awaited<ReturnType<typeof signOut>>;
 function App() {
   const [theme, setTheme] = useState<"dark" | "light">("light");
   const [pages, setPages] = useState<PageDef[]>([]);
-  const deletePage = (id: number) => {
-    setPages(prev => prev.filter(p => p.id !== id));
-  };
   const [isauth, setIsauth] = useState<boolean>(false);
   const { closeModal } = useModal();
   const [user, setUser] = useState<User | null | nulluser>(null);
   const [isPaneOpen, setIsPaneOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
   const handleCloseAlert = () => {
     setError(null);
   };
 
-  useEffect(
-    () => {
-      const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-        if (currentUser) {
-          setUser(currentUser)
-        } else {
-          setUser(null);
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        setUser(currentUser);
+        setTheme(await getUserTheme(currentUser.uid))
+        try {
+          const pagesFromDB = await getAllPages(currentUser.uid);
+          setPages(pagesFromDB);
+        } catch (err) {
+          console.error(err);
+          setError("Failed to load pages.");
         }
-      });
-
-      if (user !== null) {
-        const user_id: string = user!.uid;
-        console.log(user_id);
+      } else {
+        setUser(null);
+        setPages([]); // Clear pages on logout
       }
-      return () => unsubscribe();
-    }, [user]
-  )
-  const addPage = (type: PageDef['type'], name: string) => {
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const addPage = async (type: PageDef['type'], name: string) => {
+    if (!user) return; // Must be logged in
     const slug = name.trim().toLowerCase().replace(/\s+/g, '-');
-    const path = `/${slug}`;
-    setPages(ps => [
-      ...ps,
-      { id: Date.now(), type, name, path }
-    ]);
+    const newPage: PageDef = {
+      id: Date.now(),
+      name,
+      type,
+      path: `/${slug}`,
+    };
+    try {
+      await addPageToDB(user.uid, newPage);
+      setPages(prev => [...prev, newPage]);
+    } catch (err) {
+      console.error(err);
+      setError("Failed to add page.");
+    }
   };
+
+  const deletePage = async (id: number) => {
+    if (!user) return;
+    try {
+      await deletePageAndComponents(user.uid, id);
+      setPages(prev => prev.filter(p => p.id !== id));
+    } catch (err) {
+      console.error(err);
+      setError("Failed to delete page.");
+    }
+  };
+
   return (
     <>
       <BrowserRouter>
@@ -88,19 +119,22 @@ function App() {
 
 
         {/* Routes */}
-        <Routes>
-          <Route
-            path="/"
-            element={
-              <MainPage pages={pages} addPage={addPage} theme={theme} deletePage={deletePage} />
-            }
-          />
-          {pages.map(p => (
-            p.type === 'problem'
-              ? <Route key={p.id} path={p.path} element={<ProblemsPage theme={theme} />} />
-              : <Route key={p.id} path={p.path} element={<ConceptsPage theme={theme} />} />
-          ))}
-        </Routes>
+        {
+          loading ? (
+            <div className="text-center mt-20">Loading...</div>
+          ) : (<Routes>
+            <Route
+              path="/"
+              element={
+                <MainPage pages={pages} addPage={addPage} theme={theme} deletePage={deletePage} />
+              }
+            />
+            {pages.map(p => (
+              p.type === 'problem'
+                ? <Route key={p.id} path={p.path} element={<ProblemsPage theme={theme}/>} />
+                : <Route key={p.id} path={p.path} element={<ConceptsPage theme={theme} pageId = {p.id} user={user}/>} />
+            ))}
+          </Routes>)}
       </BrowserRouter>
     </>
   );

@@ -3,7 +3,8 @@ import UserIconSlider from './UserIconSlider';
 import type { PageDef } from '../pages/MainPage';
 import type { signInWithEmail, signOut } from '../services/firebaseAuth';
 import { useModal } from './ModalContext';
-import {useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
+import { saveUserTheme } from '../services/firestore';
 
 type User = Awaited<ReturnType<typeof signInWithEmail>>;
 type nulluser = Awaited<ReturnType<typeof signOut>>;
@@ -11,7 +12,7 @@ type nulluser = Awaited<ReturnType<typeof signOut>>;
 interface HeaderBarProps {
     theme: 'dark' | 'light';
     setTheme: React.Dispatch<React.SetStateAction<'dark' | 'light'>>;
-    user: User | null | void;
+    user: User | null | nulluser;
     setIsauth: React.Dispatch<React.SetStateAction<boolean>>;
     isPaneOpen: boolean;
     setIsPaneOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -42,6 +43,15 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
     }, [closeModal, isNavOpen, openModal]);
     const navigate = useNavigate();
 
+    const toggleTheme = async () => {
+        const newTheme = theme === "light" ? "dark" : "light";
+        setTheme(newTheme);
+        if (user) {
+            await saveUserTheme(user.uid, newTheme);
+        }
+    };
+
+
     return (
         <div className={`fixed ${theme === 'dark' ? 'bg-gray-300 text-gray-800' : 'bg-gray-800 text-white'}`}>
             {/* Top Bar */}
@@ -68,7 +78,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                         {/* Close Nav */}
                         <div className="flex justify-end p-4">
                             <button
-                                onClick={() => { setIsNavOpen(false); closeModal();}}
+                                onClick={() => { setIsNavOpen(false); closeModal(); }}
                                 className={`focus:outline-none`}
                             >
                                 <span className="material-icons">close</span>
@@ -90,16 +100,17 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                         </div>
                     </div>
                 </nav>
-                
+
                 <div className="grid grid-cols-30 gap-5">
                     <div className='col-span-13'></div>
-                    <div className={`col-span-4 text-2xl bold cursor-pointer hover:underline`} onClick={()=>navigate('/')}>Revsy</div>
+                    <div className={`col-span-4 text-2xl bold cursor-pointer hover:underline`} onClick={() => navigate('/')}>Revsy</div>
                     <div className="col-span-7"></div>
 
                     {/* Theme Toggle */}
                     <div className='col-span-1'>
                         <button
-                            onClick={() => setTheme(prev => prev === 'light' ? 'dark' : 'light')}
+                            onClick={toggleTheme}
+                            
                             className={`px-3 py-2 rounded-full ${theme === 'dark'
                                 ? 'bg-blue-500 hover:bg-blue-600'
                                 : 'bg-blue-600 hover:bg-blue-700'
@@ -136,7 +147,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                     </div>
                 </div>
                 {/* Breadcrumb Toggle Button */}
-                
+
             </div>
         </div>
 
