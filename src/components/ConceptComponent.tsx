@@ -3,13 +3,13 @@ import MarkdownRenderer from './MarkdownRenderer';
 import MarkdownEditor from './MarkdownEditor';
 
 interface ConceptComponentProps {
-  id: number;
+  id: string;
   title: string;
   description?: string;
   theme?: 'dark' | 'light';
-  onDelete: (id: number) => void;
-  onTitleChange: (id: number, newTitle: string) => void;
-  onDescriptionChange: (id: number, newDescription: string) => void;
+  onDelete: (id: string) => void;
+  onTitleChange: (id: string, newTitle: string) => void;
+  onDescriptionChange: (id: string, newDescription: string) => void;
 }
 
 const ConceptComponent: React.FC<ConceptComponentProps> = ({

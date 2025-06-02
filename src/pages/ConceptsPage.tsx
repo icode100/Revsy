@@ -20,7 +20,7 @@ interface ConceptPageProps {
 }
 
 interface Concept {
-    id: number;
+    id: string;
     title: string;
     description: string;
 }
@@ -36,21 +36,19 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user }) => {
             description: 'Edit your description here',
             componentType: 'concept',
         };
-        setConcepts(prev => [...prev, { ...newComponent, id: Date.now() }]); // OR include doc ID
-        await addComponentToPage(user.uid, pageId, newComponent);
+        const docRef = await addComponentToPage(user.uid, pageId, newComponent);
+        setConcepts(prev => [...prev, { ...newComponent, id: docRef.id }]); // OR include doc ID
     };
 
 
     useEffect(() => {
         const loadConcepts = async () => {
             if (!user || !pageId) return;
-            const components = await getComponentsOfPage(user.uid, pageId);
+            // @ts-expect-error
+            const components:Concept[] = await getComponentsOfPage(user.uid, pageId);
             const transformed = components.map(c => ({
-                // @ts-expect-error
                 id: c.id,
-                // @ts-expect-error
                 title: c.title,
-                // @ts-expect-error
                 description: c.description,
             }));
             setConcepts(transformed);
@@ -61,7 +59,7 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user }) => {
     }, [user, pageId, setConceptNumber, concepts.length]);
 
 
-    const handleDeleteConcept = async (id: number) => {
+    const handleDeleteConcept = async (id: string) => {
         if (!user || !pageId) return;
         await deleteComponent(user.uid, pageId, String(id));
         setConcepts(prev => prev.filter(c => c.id !== id));
@@ -69,7 +67,7 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user }) => {
     };
 
 
-    const updateConceptField = async (id: number, field: 'title' | 'description', value: string) => {
+    const updateConceptField = async (id: string, field: 'title' | 'description', value: string) => {
         if (!user || !pageId) return;
         setConcepts(prev =>
             prev.map(c => c.id === id ? { ...c, [field]: value } : c)

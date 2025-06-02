@@ -14,15 +14,21 @@ interface MainPageProps {
   addPage: (type: PageDef['type'], name: string) => void;
   theme: 'dark' | 'light';
   deletePage: (id: number) => void;
+  error:string|null,
+  setError: (error: string | null) => void;
+  user: unknown; // Replace with actual user type
 }
 
-const MainPage: React.FC<MainPageProps> = ({ pages, addPage, theme, deletePage }) => {
+const MainPage: React.FC<MainPageProps> = ({ pages, addPage, theme, deletePage,setError, user }) => {
   const [type, setType] = useState<PageDef['type']>('problem');
   const [name, setName] = useState('');
   const navigate = useNavigate();
   const { globalModalOpen } = useModal();
 
   const handleSubmit = (e: FormEvent) => {
+    if(!user){
+      setError("You must be logged in to add a page.");
+    }
     e.preventDefault();
     if (!name.trim()) return;
     addPage(type, name.trim());

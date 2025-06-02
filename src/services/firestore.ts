@@ -1,4 +1,6 @@
 // src/services/firestore.ts
+import type { Problem } from '../components/ProblemComponent';
+// import {type ProblemComponentType} from '../pages/ProblemsPage';
 import { db, timestamp } from './firebase';
 import {
   collection,
@@ -46,12 +48,13 @@ export async function addComponentToPage(
   userId: string,
   pageId: number,
   componentData: Record<string, unknown>
-) {
+){
   const componentsRef = collection(db, "users", userId, "pages", String(pageId), "components");
-  await addDoc(componentsRef, {
+  const docRef = await addDoc(componentsRef, {
     ...componentData,
     createdAt: serverTimestamp(),
   });
+  return docRef;
 }
 
 export async function getComponentsOfPage(
@@ -68,7 +71,7 @@ export async function updateComponent(
   userId: string,
   pageId: number,
   componentId: string,
-  updatedData: Record<string, string>
+  updatedData: Record<string, string|Problem[]>
 ) {
   const ref = doc(
     db,

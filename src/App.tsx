@@ -66,7 +66,7 @@ function App() {
       id: Date.now(),
       name,
       type,
-      path: `/${slug}`,
+      path: `/${Date.now()}+${slug}`,
     };
     try {
       await addPageToDB(user.uid, newPage);
@@ -126,12 +126,12 @@ function App() {
             <Route
               path="/"
               element={
-                <MainPage pages={pages} addPage={addPage} theme={theme} deletePage={deletePage} />
+                <MainPage pages={pages} addPage={addPage} theme={theme} deletePage={deletePage} error={error} setError={setError} user={user}/>
               }
             />
             {pages.map(p => (
               p.type === 'problem'
-                ? <Route key={p.id} path={p.path} element={<ProblemsPage theme={theme}/>} />
+                ? <Route key={p.id} path={p.path} element={<ProblemsPage theme={theme} pageId={p.id} user={user}/>} />
                 : <Route key={p.id} path={p.path} element={<ConceptsPage theme={theme} pageId = {p.id} user={user}/>} />
             ))}
           </Routes>)}

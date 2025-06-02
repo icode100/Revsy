@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { fetchLeetCodeProblem } from '../services/leetcode';
 import { summarizeText } from '../services/ai';
+import type { Problem } from './ProblemComponent';
 
 interface ProblemFormProps {
-    onSubmit: (data: { title: string; description: string; url: string }) => void;
+    onSubmit: (data: Problem) => void;
     theme: "dark" | "light";
 }
 
@@ -50,7 +51,7 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ title, description, url });
+        onSubmit({ title, description, url } as Problem);
         setTitle('');
         setDescription('');
         setUrl('');
