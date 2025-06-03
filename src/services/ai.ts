@@ -2,7 +2,7 @@ import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
 import { ChatPromptTemplate } from "@langchain/core/prompts";
 
 const model = new ChatGoogleGenerativeAI({
-    model: "gemini-2.0-flash",
+    model: "gemini-2.0-flash-lite",
     temperature: 0.7,
     maxRetries: 2,
     apiKey: import.meta.env.VITE_GOOGLE_API_KEY,

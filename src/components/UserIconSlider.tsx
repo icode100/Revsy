@@ -53,9 +53,6 @@ const UserIconSlider: React.FC<UserIconSliderProps> = ({ isPaneOpen, setIsPaneOp
         className={`flex items-center space-x-2 transition-all duration-300 ease-in-out ${isPaneOpen ? 'opacity-100 translate-x-0' : 'opacity-0 -translate-x-4 pointer-events-none'
           }`}
       >
-        <button className={`px-3 py-2  rounded-full bg-amber-400 hover:bg-amber-500 transition-colors duration-300 ${loading?"disable":""}`}>
-          <span className="material-icons">settings</span>
-        </button>
         <button onClick={handleLogout} className={`px-3 py-2 bg-red-500 rounded-full hover:bg-red-600 transition-colors duration-300 ${loading?"disable":""}`}>
           <span className="material-icons">logout</span>
         </button>

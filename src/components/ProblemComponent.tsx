@@ -178,7 +178,7 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
                                                                             href={problem.url}
                                                                             target="_blank"
                                                                             rel="noopener noreferrer"
-                                                                            className={`hover:underline ${theme === 'dark' ? 'text-blue-300' : 'text-blue-700'
+                                                                            className={`hover:underline ${theme === 'dark' ? 'text-black' : 'text-white'
                                                                                 }`}
                                                                         >
                                                                             {problem.title}
