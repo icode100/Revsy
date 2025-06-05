@@ -15,10 +15,8 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
     const [isLeetCode, setIsLeetCode] = useState(false);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-
+    const [tags, setTags] = useState<string>("");
     const descriptionRef = useRef<HTMLTextAreaElement>(null);
-
-
 
     const handleFetchDescription = async () => {
         try {
@@ -51,7 +49,9 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
-        onSubmit({ title, description, url } as Problem);
+        const tag_arr:string[] = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        const tagArr:string[] = tag_arr.length > 3 ? tag_arr.slice(0, 3) : tag_arr;
+        onSubmit({ title, description, url, tagArr } as Problem);
         setTitle('');
         setDescription('');
         setUrl('');
@@ -167,6 +167,26 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
                 >
                     {loading ? "Summarizing..." : "Summarize with AI"}
                 </button>) : (<button className='mt-2 px-4 py-2 rounded bg-gray-400' disabled={true}> No Description</button>)}
+            </div>
+            <div className="mb-4">
+                <label
+                    htmlFor="problem-title"
+                    className="block text-sm font-medium mb-2"
+                >
+                    Tags
+                </label>
+                <input
+                    id="problem-title"
+                    type="text"
+                    value={tags}
+                    onChange={(e) => setTags(e.target.value)}
+                    required
+                    className={`w-full px-4 py-2 rounded border ${theme === "dark"
+                            ? "bg-gray-700 border-gray-600 text-white"
+                            : "bg-gray-100 border-gray-300 text-black"
+                        }`}
+                    placeholder="Enter top 3 tags separated by commas"
+                />
             </div>
             <button
                 type="submit"

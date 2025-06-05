@@ -4,10 +4,11 @@ import MarkdownRenderer from './MarkdownRenderer';
 interface AccordionProps {
     title: React.ReactNode;
     description: string;
+    tagArr: string[],
     theme?: "dark" | "light";
 }
 
-const Accordion: React.FC<AccordionProps> = ({ title, description, theme }) => {
+const Accordion: React.FC<AccordionProps> = ({ title, tagArr, description, theme }) => {
     const [isOpen, setIsOpen] = React.useState(false);
 
     const toggleAccordion = () => setIsOpen((prev) => !prev);
@@ -20,10 +21,21 @@ const Accordion: React.FC<AccordionProps> = ({ title, description, theme }) => {
                 }`}
                 onClick={toggleAccordion}
             >
-                <span>{title}</span>
-                <span className="material-icons">
-                    {isOpen ? 'expand_less' : 'expand_more'}
-                </span>
+                <div className="grid grid-cols-25">
+                    <span className='col-span-15'>{title}</span>
+                    {tagArr.length>0?(<span className='col-span-9 text-sm text-gray-300'>
+                        {tagArr.map((tag, index) => (
+                            <span key={index} className="inline-block mr-2 px-2 py-1 bg-gray-200 rounded-full text-xs text-black">
+                                {tag}
+                            </span>
+                        ))}
+                    </span>):(<span className='col-span-9'></span>)}
+                    <div className="col-span-1">
+                        <span className="material-icons">
+                            {isOpen ? 'expand_less' : 'expand_more'}
+                        </span>
+                    </div>
+                </div>
             </button>
             {isOpen && (
                 <div className={`accordion-content ${theme==="dark"? "bg-gray-700":"bg-gray-50"} px-4 py-3`}>

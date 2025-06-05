@@ -12,16 +12,17 @@ export interface Problem {
     description: string;
     url: string;
     isLeetCode: boolean;
+    tagArr: string[]; // Added tagArr to Problem interface
 }
 
 interface ProblemComponentProps {
-  id: string;  // Changed from number to string
-  problems: Problem[];
-  note: string;
-  theme: 'dark' | 'light';
-  onProblemsChange: (id: string, value: Problem[]) => void;
-  onNoteChange: (id: string, value: string) => void;
-  onDelete: (id: string) => void;
+    id: string;  // Changed from number to string
+    problems: Problem[];
+    note: string;
+    theme: 'dark' | 'light';
+    onProblemsChange: (id: string, value: Problem[]) => void;
+    onNoteChange: (id: string, value: string) => void;
+    onDelete: (id: string) => void;
 }
 
 const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note, theme, onDelete, onNoteChange, onProblemsChange }) => {
@@ -41,6 +42,7 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
                 description: problem.description,
                 url: problem.url,
                 isLeetCode: problem.url.includes('leetcode.com'),
+                tagArr: problem.tagArr || [], // Ensure tags are included
             },
         ]);
         setIsModalOpen(false);
@@ -53,6 +55,11 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
         setProblems(editedProblems.filter((problem) => problem.id !== id));
     };
 
+    const splitAndStrip = (tags: string) => {
+        const tag_arr: string[] = tags.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0);
+        const tagArr: string[] = tag_arr.length > 3 ? tag_arr.slice(0, 3) : tag_arr;
+        return tagArr;
+    }
     const handleSave = () => {
         onProblemsChange(id, editedProblems);
         onNoteChange(id, editedNote);
@@ -149,6 +156,22 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
                                                                         : 'bg-gray-100 border-gray-300 text-black'
                                                                         }`}
                                                                 />
+                                                                <label htmlFor={`tags-${problem.id}`}>Tags</label>
+                                                                <input
+                                                                    type="text"
+                                                                    id={`tags-${problem.id}`}
+                                                                    value={problem.tagArr.join(',')} // Display tags as a comma-separated string
+                                                                    onChange={(e) =>
+                                                                        updateProblem(problem.id, { ...problem, tagArr: e.target.value.split(',') }) // Allow free typing
+                                                                    }
+                                                                    onBlur={(e) =>
+                                                                        updateProblem(problem.id, { ...problem, tagArr: splitAndStrip(e.target.value) }) // Apply splitAndStrip on blur
+                                                                    }
+                                                                    className={`w-full mt-2 px-2 py-1 rounded border ${theme === 'dark'
+                                                                        ? 'bg-gray-800 border-gray-600 text-white'
+                                                                        : 'bg-gray-100 border-gray-300 text-black'
+                                                                        }`}
+                                                                />
                                                                 <label htmlFor={`url-${problem.id}`}>URL</label>
                                                                 <input
                                                                     id={`url-${problem.id}`}
@@ -185,6 +208,7 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
                                                                         </a>
                                                                     }
                                                                     description={problem.description}
+                                                                    tagArr={problem.tagArr}
                                                                     theme={theme}
                                                                 />
                                                             </div>
