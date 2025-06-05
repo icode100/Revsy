@@ -8,7 +8,7 @@ interface ProblemFormProps {
     theme: "dark" | "light";
 }
 
-const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
+const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [url, setUrl] = useState('');
@@ -24,7 +24,7 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
         try {
             setLoading(true);
             setError(null);
-            if(url.length===0) throw new Error("url cannot be empty")
+            if (url.length === 0) throw new Error("url cannot be empty")
             const problem = await fetchLeetCodeProblem(url);
             setTitle(problem.title);
             setDescription(problem.description);
@@ -65,14 +65,13 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
             descriptionRef.current.style.height = `${descriptionRef.current.scrollHeight}px`; // Adjust height
         }
     }, [description]);
-    
+
 
     return (
         <form
             onSubmit={handleSubmit}
-            className={`p-6 rounded-lg shadow-md ${
-                theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
-            }`}
+            className={`p-6 rounded-lg shadow-md ${theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
+                }`}
         >
             <div className="mb-4">
                 <label
@@ -89,23 +88,22 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
                         required
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="Enter LeetCode problem URL"
-                        className={`flex-1 px-4 py-2 rounded border ${
-                            theme === "dark"
+                        className={`flex-1 px-4 py-2 rounded border ${theme === "dark"
                                 ? "bg-gray-700 border-gray-600 text-white"
                                 : "bg-gray-100 border-gray-300 text-black"
-                        }`}
+                            }`}
                     />
+
                     <button
                         type="button"
                         onClick={handleFetchDescription}
                         disabled={loading}
-                        className={`px-4 py-2 rounded ${
-                            loading
+                        className={`px-4 py-2 rounded ${loading
                                 ? "bg-gray-400 cursor-not-allowed"
                                 : theme === "dark"
-                                ? "bg-blue-600 hover:bg-blue-700 text-white"
-                                : "bg-blue-500 hover:bg-blue-600 text-white"
-                        }`}
+                                    ? "bg-blue-600 hover:bg-blue-700 text-white"
+                                    : "bg-blue-500 hover:bg-blue-600 text-white"
+                            }`}
                     >
                         {loading ? "Fetching..." : "Fetch Description"}
                     </button>
@@ -125,11 +123,10 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
-                    className={`w-full px-4 py-2 rounded border ${
-                        theme === "dark"
+                    className={`w-full px-4 py-2 rounded border ${theme === "dark"
                             ? "bg-gray-700 border-gray-600 text-white"
                             : "bg-gray-100 border-gray-300 text-black"
-                    }`}
+                        }`}
                 />
             </div>
             <div className="mb-4">
@@ -150,40 +147,36 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme}) => {
                             ? "Fetched description will appear here..."
                             : "Enter your own description..."
                     }
-                    className={`w-full px-4 py-2 rounded border resize-none ${
-                        theme === "dark"
+                    className={`w-full px-4 py-2 rounded border resize-none ${theme === "dark"
                             ? "bg-gray-700 border-gray-600 text-white"
                             : "bg-gray-100 border-gray-300 text-black"
-                    }`}
+                        }`}
                     style={{ overflow: "hidden" }}
                 />
-                {isLeetCode && (
-                    <button
-                        type="button"
-                        onClick={handleSummarize}
-                        disabled={!description || loading}
-                        className={`mt-2 px-4 py-2 rounded ${
-                            loading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : theme === "dark"
+
+                {description !== "" ? (<button
+                    type="button"
+                    onClick={handleSummarize}
+                    disabled={!description || loading}
+                    className={`mt-2 px-4 py-2 rounded ${loading
+                            ? "bg-gray-400 cursor-not-allowed"
+                            : theme === "dark"
                                 ? "bg-green-600 hover:bg-green-700 text-white"
                                 : "bg-green-500 hover:bg-green-600 text-white"
                         }`}
-                    >
-                        {loading ? "Summarizing..." : "Summarize with AI"}
-                    </button>
-                )}
+                >
+                    {loading ? "Summarizing..." : "Summarize with AI"}
+                </button>) : (<button className='mt-2 px-4 py-2 rounded bg-gray-400' disabled={true}> No Description</button>)}
             </div>
             <button
                 type="submit"
                 disabled={loading}
-                className={`w-full px-4 py-2 rounded ${
-                    loading
+                className={`w-full px-4 py-2 rounded ${loading
                         ? "bg-gray-400 cursor-not-allowed"
                         : theme === "dark"
-                        ? "bg-purple-600 hover:bg-purple-700 text-white"
-                        : "bg-purple-500 hover:bg-purple-600 text-white"
-                }`}
+                            ? "bg-purple-600 hover:bg-purple-700 text-white"
+                            : "bg-purple-500 hover:bg-purple-600 text-white"
+                    }`}
             >
                 Submit
             </button>
