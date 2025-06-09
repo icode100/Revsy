@@ -92,7 +92,7 @@ const MainPage: React.FC<MainPageProps> = ({ pages, addPage, theme, deletePage,s
                 <h2 className="text-xl font-semibold">{p.name}</h2>
                 <p className="text-sm text-gray-500 capitalize">{p.type}</p>
               </div>
-              <button className='col-span-1 rounded-lg bg-red-500 hover:bg-red-600 cursor-pointer' onClick={() => handleDelete(p.id)}><span className="material-icons">delete</span></button>
+              <button className={`col-span-1 rounded-lg bg-red-500 hover:bg-red-600 cursor-pointer ${globalModalOpen ? "blur-2xl" : ""}`} onClick={() => handleDelete(p.id)}><span className="material-icons">delete</span></button>
             </div>
           ))}
         </div>
