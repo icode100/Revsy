@@ -2,6 +2,7 @@
 import React from 'react';
 import { signOut } from '../services/firebaseAuth';
 import type { signInWithEmail } from '../services/firebaseAuth';
+import { useNavigate } from 'react-router-dom';
 type nulluser = Awaited<ReturnType<typeof signOut>>;
 
 type User = Awaited<ReturnType<typeof signInWithEmail>>;
@@ -19,6 +20,7 @@ const UserIconSlider: React.FC<UserIconSliderProps> = ({ isPaneOpen, setIsPaneOp
   const togglePane = () => {
     setIsPaneOpen(!isPaneOpen);
   };
+  const navigate = useNavigate();
 
   const handleLogout = async () => {
     try {
@@ -29,6 +31,7 @@ const UserIconSlider: React.FC<UserIconSliderProps> = ({ isPaneOpen, setIsPaneOp
       console.log(user)
       console.log(typeof user);
       setLoading(false);
+      navigate('/');
       // setUser(user);
     } catch (e: unknown) {
       if (e instanceof Error) {

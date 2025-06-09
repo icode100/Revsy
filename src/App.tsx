@@ -1,6 +1,6 @@
 // /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useEffect, useState } from 'react'
-import { BrowserRouter, Routes, Route } from "react-router";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router";
 import MainPage, { type PageDef } from './pages/MainPage';
 import ProblemsPage from "./pages/ProblemsPage";
 import AuthModal from './components/AuthModal';
@@ -66,7 +66,7 @@ function App() {
       id: Date.now(),
       name,
       type,
-      path: `/${Date.now()}+${slug}`,
+      path: `/user/${user.uid}/${type}/${Date.now()}/${slug}`,
     };
     try {
       await addPageToDB(user.uid, newPage);
@@ -122,19 +122,50 @@ function App() {
         {
           loading ? (
             <div className="text-center mt-20">Loading...</div>
-          ) : (<Routes>
-            <Route
-              path="/"
-              element={
-                <MainPage pages={pages} addPage={addPage} theme={theme} deletePage={deletePage} error={error} setError={setError} user={user}/>
-              }
-            />
-            {pages.map(p => (
-              p.type === 'problem'
-                ? <Route key={p.id} path={p.path} element={<ProblemsPage theme={theme} pageId={p.id} user={user}/>} />
-                : <Route key={p.id} path={p.path} element={<ConceptsPage theme={theme} pageId = {p.id} user={user}/>} />
-            ))}
-          </Routes>)}
+          ) : (
+            <Routes>
+              <Route
+                path="/"
+                element={
+                  user ? <Navigate to={`/user/${user.uid}`} replace /> : <MainPage pages={pages} addPage={addPage} theme={theme} deletePage={deletePage} error={error} setError={setError} user={user} />
+                }
+              />
+              <Route
+                path={`/user/${user ? user.uid : ""}`}
+                element={
+                  <MainPage pages={pages} addPage={addPage} theme={theme} deletePage={deletePage} error={error} setError={setError} user={user} />
+                }
+              />
+              {pages.map(p => (
+                <Route
+                  key={p.id}
+                  path={p.path}
+                  element={
+                    p.type === 'problem'
+                      ? <ProblemsPage theme={theme} pageId={p.id} user={user} setError={setError} name={p.name}/>
+                      : <ConceptsPage theme={theme} pageId={p.id} user={user} setError={setError} name={p.name}/>
+                  }
+                />
+              ))}
+              {/* 404 Page */}
+              <Route
+                path="*"
+                element={
+                  <div
+                    className={`min-h-screen p-4 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
+                      }`}
+                  >
+                    <div className='mt-50 place-items-center text-5xl'>
+                      <h1 className="text-4xl font-bold">404 - Page Not Found</h1>
+                      <p className="mt-4">The page you are looking for does not exist.</p>
+                      <a href="/" className="mt-6 inline-block px-4 py-2 text-white rounded hover:underline">
+                        Go to Home
+                      </a>
+                    </div>
+                  </div>
+                }
+              />
+            </Routes>)}
       </BrowserRouter>
     </>
   );

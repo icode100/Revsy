@@ -87,7 +87,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
 
                         {/* Nav Links */}
                         <div className={`p-4`}>
-                            <a href="/" className="block py-2 hover:underline">Home</a>
+                            <a href={`/`} className="block py-2 hover:underline">Home</a>
                             {pages.map(p => (
                                 <a
                                     key={p.id}
