@@ -23,9 +23,10 @@ interface ProblemComponentProps {
     onProblemsChange: (id: string, value: Problem[]) => void;
     onNoteChange: (id: string, value: string) => void;
     onDelete: (id: string) => void;
+    setError?: (error: string) => void;
 }
 
-const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note, theme, onDelete, onNoteChange, onProblemsChange }) => {
+const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note, theme, onDelete, onNoteChange, onProblemsChange, setError }) => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const { globalModalOpen, openModal, closeModal } = useModal();
     const [editMode, setEditMode] = useState(false);
@@ -210,7 +211,8 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
                                                                     description={problem.description}
                                                                     tagArr={problem.tagArr}
                                                                     theme={theme}
-                                                                />
+                                                                    setError={setError ?? (() => {})}
+                                                                />                                                                
                                                             </div>
                                                         )}
                                                     </div>

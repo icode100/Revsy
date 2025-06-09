@@ -206,6 +206,7 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
                       onNoteChange={updateNoteField}
                       onProblemsChange={updateProblemField}
                       theme={theme}
+                      setError={setError}
                     />
                   </div>
                 ))}
