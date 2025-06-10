@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useState, useEffect } from 'react';
-import ConceptComponent from '../components/ConceptComponent';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+const ConceptComponent = React.lazy(() => import('../components/ConceptComponent'));
 import { useModal } from '../components/ModalContext';
 import {
     addComponentToPage,
@@ -10,6 +10,7 @@ import {
 } from '../services/firestore';
 import type { signInWithEmail, signOut } from '../services/firebaseAuth';
 import { parseExcelFileConcepts } from '../services/excelParser';
+import { throttle } from 'lodash';
 
 type User = Awaited<ReturnType<typeof signInWithEmail>>;
 type nulluser = Awaited<ReturnType<typeof signOut>>;
@@ -35,6 +36,35 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setErro
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [sheetName, setSheetName] = useState('');
     const [loading, setLoading] = useState(false);
+    const [showScrollButton, setShowScrollButton] = useState(false); // State for scroll button visibility
+    const [showScrollUpButton, setShowScrollUpButton] = useState(false); // State for scroll-to-top button visibility
+    const pageEndRef = useRef<HTMLDivElement>(null); // Ref for the end of the page
+
+    const handleScroll = () => {
+        const scrollTop = window.scrollY;
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+
+        const shouldShowScrollButton = scrollTop + windowHeight < documentHeight - 100;
+        const shouldShowScrollUpButton = scrollTop > 100;
+
+        if (showScrollButton !== shouldShowScrollButton) {
+            setShowScrollButton(shouldShowScrollButton);
+        }
+        if (showScrollUpButton !== shouldShowScrollUpButton) {
+            setShowScrollUpButton(shouldShowScrollUpButton);
+        }
+    };
+    const throttledHandleScroll = useRef(throttle(handleScroll, 100)).current;
+
+
+    const scrollToBottom = useCallback(() => {
+        pageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, []);
+
+    const scrollToTop = useCallback(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, []);
     const handleAddConcept = async () => {
         if (!user || !pageId) return;
         const newComponent = {
@@ -105,7 +135,13 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setErro
         };
 
         loadConcepts();
-    }, [user, pageId, concepts.length]);
+        window.addEventListener('scroll', throttledHandleScroll);
+        return () => {
+            window.removeEventListener('scroll', throttledHandleScroll);
+        };
+    }, [user, pageId, concepts.length, throttledHandleScroll]);
+
+
 
 
     const handleDeleteConcept = async (id: string) => {
@@ -129,6 +165,25 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setErro
             className={`min-h-screen p-4 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
                 } ${concepts.length === 0 ? "place-items-center" : ""} `}
         >
+            {/* Scroll-to-bottom button */}
+            {showScrollUpButton && (
+                <button
+                    className={`fixed bottom-16 right-4 px-4 py-2 rounded-full shadow-lg ${theme === 'dark' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+                    onClick={scrollToTop}
+                    title="Scroll to top"
+                >
+                    ↑
+                </button>
+            )}
+            {showScrollButton && (
+                <button
+                    className={`fixed bottom-4 right-4 px-4 py-2 rounded-full shadow-lg ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+                    onClick={scrollToBottom}
+                    title="Scroll to bottom"
+                >
+                    ↓
+                </button>
+            )}
             {isModalOpen && (
                 <form className={`mt-25 p-6 rounded-lg shadow-md ${theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
                     }`} onSubmit={handleSubmitForm}>
@@ -166,16 +221,18 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setErro
                         <div className="grid grid-cols-19">
                             <div className="space-y-4 col-span-19">
                                 {concepts.map((concept) => (
-                                    <ConceptComponent
-                                        key={concept.id}
-                                        id={concept.id}
-                                        title={concept.title}
-                                        description={concept.description}
-                                        theme={theme}
-                                        onDelete={handleDeleteConcept}
-                                        onTitleChange={(id, newTitle) => updateConceptField(id, 'title', newTitle)}
-                                        onDescriptionChange={(id, newDesc) => updateConceptField(id, 'description', newDesc)}
-                                    />
+                                    <React.Suspense fallback={<div>Loading...</div>}>
+                                        <ConceptComponent
+                                            key={concept.id}
+                                            id={concept.id}
+                                            title={concept.title}
+                                            description={concept.description}
+                                            theme={theme}
+                                            onDelete={handleDeleteConcept}
+                                            onTitleChange={(id, newTitle) => updateConceptField(id, 'title', newTitle)}
+                                            onDescriptionChange={(id, newDesc) => updateConceptField(id, 'description', newDesc)}
+                                        />
+                                    </React.Suspense>
                                 ))}
                             </div>
                             <div className="col-span-1 mt-4">
@@ -209,6 +266,8 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setErro
                 </div>
 
             )}
+            <div ref={pageEndRef}></div> {/* Reference for the end of the page */}
+
 
         </div>
     );

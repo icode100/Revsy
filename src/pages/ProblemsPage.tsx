@@ -1,12 +1,13 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import React, { useEffect, useState } from 'react';
-import ProblemComponent, { type Problem } from '../components/ProblemComponent';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+const ProblemComponent = React.lazy(() => import('../components/ProblemComponent'));
+import { type Problem } from '../components/ProblemComponent';
 import { useModal } from '../components/ModalContext';
 import type { signInWithEmail, signOut } from '../services/firebaseAuth';
 import { parseExcelFileProblems } from '../services/excelParser';
 import { addComponentToPage, deleteComponent, getComponentsOfPage, updateComponent } from '../services/firestore';
 import { fetchLeetCodeProblem } from '../services/leetcode';
-
+import { throttle } from 'lodash'
 
 type User = Awaited<ReturnType<typeof signInWithEmail>>;
 type nulluser = Awaited<ReturnType<typeof signOut>>;
@@ -33,6 +34,41 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [sheetName, setSheetName] = useState('');
   const [loading, setLoading] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false); // State for scroll button visibility
+  const [showScrollUpButton, setShowScrollUpButton] = useState(false); // State for scroll-to-top button visibility
+  const pageEndRef = useRef<HTMLDivElement>(null); // Ref for the end of the page
+
+
+  const handleScroll = () => {
+    const scrollTop = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
+
+    const shouldShowScrollButton = scrollTop + windowHeight < documentHeight - 100;
+    const shouldShowScrollUpButton = scrollTop > 100;
+
+    if (showScrollButton !== shouldShowScrollButton) {
+      setShowScrollButton(shouldShowScrollButton);
+    }
+    if (showScrollUpButton !== shouldShowScrollUpButton) {
+      setShowScrollUpButton(shouldShowScrollUpButton);
+    }
+  };
+
+  const debouncedHandleScroll = useRef(throttle(handleScroll, 100)).current;
+
+  const scrollToBottom = useCallback(() => {
+    pageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, []);
+
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, []);
+
+
+  // useEffect(() => {
+
+  // }, []);
 
   const handleSubmitForm = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -115,7 +151,14 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
     };
 
     loadProblemComponents();
-  }, [user, pageId]);
+
+    window.addEventListener('scroll', debouncedHandleScroll);
+    return () => {
+      window.removeEventListener('scroll', debouncedHandleScroll);
+    };
+  }, [user, pageId, debouncedHandleScroll
+
+  ]);
 
   const handleAddProblemComponent = async () => {
     if (!user || !pageId) return;
@@ -160,6 +203,25 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
         className={`min-h-screen p-4 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
           } ${problemComponents.length === 0 ? "place-items-center" : ""}`}
       >
+        {/* Scroll-to-bottom button */}
+        {showScrollUpButton && (
+          <button
+            className={`fixed bottom-16 right-4 px-4 py-2 rounded-full shadow-lg ${theme === 'dark' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
+            onClick={scrollToTop}
+            title="Scroll to top"
+          >
+            ↑
+          </button>
+        )}
+        {showScrollButton && (
+          <button
+            className={`fixed bottom-4 right-4 px-4 py-2 rounded-full shadow-lg ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
+            onClick={scrollToBottom}
+            title="Scroll to bottom"
+          >
+            ↓
+          </button>
+        )}
         {isModalOpen && (
           <form className={`mt-25 p-6 rounded-lg shadow-md ${theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
             }`} onSubmit={handleSubmitForm}>
@@ -197,17 +259,19 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
                 <h4> The number of problem components being {problemComponents.length}</h4>
                 {problemComponents.map((component) => (
                   <div className='mb-4' key={component.id}>
-                    <ProblemComponent
-                      key={component.id}
-                      id={component.id}
-                      problems={component.problems as Problem[]}
-                      note={component.note}
-                      onDelete={handleDeleteProblemComponent}
-                      onNoteChange={updateNoteField}
-                      onProblemsChange={updateProblemField}
-                      theme={theme}
-                      setError={setError}
-                    />
+                    <React.Suspense fallback={<div>Loading...</div>}>
+                      <ProblemComponent
+                        key={component.id}
+                        id={component.id}
+                        problems={component.problems as Problem[]}
+                        note={component.note}
+                        onDelete={handleDeleteProblemComponent}
+                        onNoteChange={updateNoteField}
+                        onProblemsChange={updateProblemField}
+                        theme={theme}
+                        setError={setError}
+                      />
+                    </React.Suspense>
                   </div>
                 ))}
                 <div className="mt-4">
@@ -239,6 +303,8 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
             </div>
           )
         }
+        <div ref={pageEndRef}></div> {/* Reference for the end of the page */}
+
       </div>
     </>
   );
