@@ -1,7 +1,7 @@
 export async function fetchLeetCodeProblem(url:string):Promise<{ title: string; description: string }> {
   try {
     // Validate URL format
-    const match = url.match(/^https:\/\/leetcode\.com\/problems\/([a-z0-9-]+)\/?$/);
+    const match = url.match(/^https:\/\/leetcode\.com\/problems\/([a-z0-9-]+)\/?(description\/?)?$/);
     if (!match) {
       throw new Error("Invalid URL. Please enter a correct LeetCode problem URL.");
     }
