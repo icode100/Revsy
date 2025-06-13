@@ -88,7 +88,7 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
       const newComponents = await Promise.all(parsedData.map(async (data) => (
         {
           problems: await Promise.all(data.problems.map(async (problem, index) => {
-            const match = problem.url.match(/^https:\/\/leetcode\.com\/problems\/([a-z0-9-]+)\/?$/);
+            const match = problem.url.match(/^https:\/\/leetcode\.com\/problems\/([a-z0-9-]+)\/?(description\/?)?$/);
             if (match) {
               const temp = await fetchLeetCodeProblem(problem.url);
               return {
