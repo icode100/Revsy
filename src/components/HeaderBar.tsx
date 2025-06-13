@@ -53,7 +53,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
 
 
     return (
-        <div className={`fixed ${theme === 'dark' ? 'bg-gray-300 text-gray-800' : 'bg-gray-800 text-white'}`}>
+        <div className={`fixed ${theme === 'dark' ? 'bg-gray-400 text-gray-800' : 'bg-gray-800 text-white'}`}>
             {/* Top Bar */}
             <div className="flex align-items-center w-full mt-4 mb-4 z-50">
                 <nav className='z-50'>
@@ -103,14 +103,20 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
 
                 <div className="grid grid-cols-30 gap-5">
                     <div className='col-span-13'></div>
-                    <div className={`col-span-4 text-2xl bold cursor-pointer hover:underline`} onClick={() => navigate('/')}>Revsy</div>
+                    <span className={`col-span-4 flex item-center text-2xl bold cursor-pointer hover:underline`} id="RevsyId" onClick={() => navigate('/')}>
+                        <img
+                            src="/Logo.png"
+                            alt="Revsy Logo"
+                            className="h-10 w-auto mr-0"
+                        /><span className="ml-0 text-2xl font-bold">evsy</span>
+                    </span>
                     <div className="col-span-7"></div>
 
                     {/* Theme Toggle */}
                     <div className='col-span-1'>
                         <button
                             onClick={toggleTheme}
-                            
+
                             className={`px-3 py-2 rounded-full ${theme === 'dark'
                                 ? 'bg-blue-500 hover:bg-blue-600'
                                 : 'bg-blue-600 hover:bg-blue-700'
