@@ -29,6 +29,7 @@ export interface ProblemComponentType {
 
 const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setError, name }) => {
   const [problemComponents, setProblemComponents] = useState<ProblemComponentType[]>([]);
+  const [isReversed, setIsReversed] = useState(false); // State to track the order of components
   const { globalModalOpen, openModal, closeModal } = useModal();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -37,6 +38,10 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
   const [showScrollButton, setShowScrollButton] = useState(false); // State for scroll button visibility
   const [showScrollUpButton, setShowScrollUpButton] = useState(false); // State for scroll-to-top button visibility
   const pageEndRef = useRef<HTMLDivElement>(null); // Ref for the end of the page
+
+  const toggleOrder = () => {
+    setIsReversed(prev => !prev); // Toggle the order
+  };
 
 
   const handleScroll = () => {
@@ -203,6 +208,16 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
         className={`min-h-screen p-4 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
           } ${problemComponents.length === 0 ? "place-items-center" : ""}`}
       >
+        {/* Toggle Order Button */}
+        <div className="fixed top-26 right-4 px-4 py-2">
+          <button
+            className={`px-4 py-2 rounded-full ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'} text-white`}
+            onClick={toggleOrder}
+            title={isReversed ? "Show oldest first" : "Show newest first"}
+          >
+            {isReversed ? (<span className='material-icons'>keyboard_double_arrow_down</span>) : (<span className='material-icons'>keyboard_double_arrow_up</span>)}
+          </button>
+        </div>
         {/* Scroll-to-bottom button */}
         {showScrollUpButton && (
           <button
@@ -257,7 +272,7 @@ const ProblemsPage: React.FC<ProblemsPageProps> = ({ theme, pageId, user, setErr
               <div className="col-start-2 col-span-5">
                 <h1 className='text-4xl bold mb-4'>Problem Page: {name}</h1>
                 <h4> The number of problem components being {problemComponents.length}</h4>
-                {problemComponents.map((component) => (
+                {(isReversed ? [...problemComponents].reverse() : problemComponents).map((component) => (
                   <div className='mb-4' key={component.id}>
                     <React.Suspense fallback={<div>Loading...</div>}>
                       <ProblemComponent

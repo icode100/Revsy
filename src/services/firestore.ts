@@ -12,6 +12,8 @@ import {
   addDoc,
   serverTimestamp,
   getDoc,
+  query,
+  orderBy,
 } from 'firebase/firestore';
 
 export type PageDef = {
@@ -61,8 +63,9 @@ export async function getComponentsOfPage(
   userId: string,
   pageId: number
 ): Promise<unknown[]> {
+  const componentsRef = collection(db, "users", userId, "pages", String(pageId), "components");
   const snapshot = await getDocs(
-    collection(db, "users", userId, "pages", String(pageId), "components")
+    query(componentsRef, orderBy("createdAt", "asc")) // Order by createdAt in ascending order
   );
   return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }

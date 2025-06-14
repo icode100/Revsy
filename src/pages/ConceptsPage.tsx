@@ -31,6 +31,7 @@ interface Concept {
 
 const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setError, name }) => {
     const [concepts, setConcepts] = useState<Concept[]>([]);
+    const [isReversed, setIsReversed] = useState(false); // State to track the order of components
     const { globalModalOpen, openModal, closeModal } = useModal();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
@@ -39,6 +40,10 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setErro
     const [showScrollButton, setShowScrollButton] = useState(false); // State for scroll button visibility
     const [showScrollUpButton, setShowScrollUpButton] = useState(false); // State for scroll-to-top button visibility
     const pageEndRef = useRef<HTMLDivElement>(null); // Ref for the end of the page
+
+    const toggleOrder = () => {
+        setIsReversed(prev => !prev); // Toggle the order
+    };
 
     const handleScroll = () => {
         const scrollTop = window.scrollY;
@@ -165,6 +170,16 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setErro
             className={`min-h-screen p-4 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'
                 } ${concepts.length === 0 ? "place-items-center" : ""} `}
         >
+            {/* Toggle Order Button */}
+            <div className="fixed top-26 right-4 px-4 py-2">
+                <button
+                    className={`px-4 py-2 rounded-full ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'} text-white`}
+                    onClick={toggleOrder}
+                    title={isReversed ? "Show oldest first" : "Show newest first"}
+                >
+                    {isReversed ? (<span className='material-icons'>keyboard_double_arrow_down</span>) : (<span className='material-icons'>keyboard_double_arrow_up</span>)}
+                </button>
+            </div>
             {/* Scroll-to-bottom button */}
             {showScrollUpButton && (
                 <button
@@ -220,7 +235,7 @@ const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setErro
                         <h4> The number of concepts being {concepts.length}</h4>
                         <div className="grid grid-cols-19">
                             <div className="space-y-4 col-span-19">
-                                {concepts.map((concept) => (
+                                {(isReversed ? [...concepts].reverse() : concepts).map((concept) => (
                                     <React.Suspense fallback={<div>Loading...</div>}>
                                         <ConceptComponent
                                             key={concept.id}
