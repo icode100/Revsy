@@ -16,7 +16,6 @@ interface MarkdownRendererProps {
 }
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) => {
-    // You can use a markdown library like 'marked' or 'react-markdown' here
     return (
         <div className="prose prose-slate max-w-none break-words whitespace-pre-wrap p-4">
             <ReactMarkdown
@@ -79,7 +78,11 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
                             </div>
                         ) : (
                             <code
-                                className={`${className || ''} break-words whitespace-pre-wrap rounded px-1 py-0.5 bg-gray-100 dark:bg-gray-800`}
+                                className={`${className || ''} break-words whitespace-pre-wrap rounded px-1 py-0.5`}
+                                style={{
+                                    backgroundColor: theme === "dark" ? "#2d3748" : "#f3f4f6", // Adjust background color
+                                    color: theme === "dark" ? "#f7fafc" : "#1a202c", // Adjust text color
+                                }}
                                 {...props}
                             >
                                 {children}
