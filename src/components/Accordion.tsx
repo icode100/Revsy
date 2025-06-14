@@ -39,7 +39,7 @@ const Accordion: React.FC<AccordionProps> = ({ title, tagArr, description, theme
                 }`}
                 onClick={toggleAccordion}
             >
-                <div className="grid grid-cols-25">
+                <div className="grid grid-cols-25 gap-2">
                     <span className='col-span-15'>{title}</span>
                     {tagArr.length>0?(<span className='col-span-9 text-sm text-gray-300'>
                         {tagArr.map((tag, index) => (
