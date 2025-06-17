@@ -19,3 +19,16 @@ body {
 .prose ul ul ul {
   list-style-type: square;
 }
+
+@keyframes time-bar {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-time-bar {
+  animation: time-bar linear forwards;
+}

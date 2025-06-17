@@ -15,7 +15,7 @@ import { throttle } from 'lodash';
 type User = Awaited<ReturnType<typeof signInWithEmail>>;
 type nulluser = Awaited<ReturnType<typeof signOut>>;
 
-interface ConceptPageProps {
+export interface ConceptPageProps {
     theme: 'dark' | 'light';
     pageId: number
     user: User | null | nulluser;
@@ -23,7 +23,7 @@ interface ConceptPageProps {
     name: string;
 }
 
-interface Concept {
+export interface Concept {
     id: string;
     title: string;
     description: string;
@@ -31,12 +31,12 @@ interface Concept {
 
 const ConceptsPage: React.FC<ConceptPageProps> = ({ theme, pageId, user, setError, name }) => {
     const [concepts, setConcepts] = useState<Concept[]>([]);
-    const [isReversed, setIsReversed] = useState(false); // State to track the order of components
     const { globalModalOpen, openModal, closeModal } = useModal();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [uploadedFile, setUploadedFile] = useState<File | null>(null);
     const [sheetName, setSheetName] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isReversed, setIsReversed] = useState(false); // State to track the order of components
     const [showScrollButton, setShowScrollButton] = useState(false); // State for scroll button visibility
     const [showScrollUpButton, setShowScrollUpButton] = useState(false); // State for scroll-to-top button visibility
     const pageEndRef = useRef<HTMLDivElement>(null); // Ref for the end of the page

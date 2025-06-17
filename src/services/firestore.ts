@@ -132,3 +132,20 @@ export async function getUserTheme(userId: string): Promise<"light" | "dark"> {
   }
   return "light";
 }
+
+
+// Function to toggle the public visibility of a page
+export async function togglePagePublicStatus(userId: string, pageId: number, isPublic: boolean) {
+  const pageRef = doc(db, "users", userId, "pages", String(pageId));
+  await updateDoc(pageRef, { isPublic });
+}
+
+// Function to check if a page is public
+export async function isPagePublic(userId: string, pageId: number): Promise<boolean> {
+  const pageRef = doc(db, "users", userId, "pages", String(pageId));
+  const snap = await getDoc(pageRef);
+  if (snap.exists()) {
+    return snap.data().isPublic || false; // Default to false if isPublic is not set
+  }
+  return false;
+}
