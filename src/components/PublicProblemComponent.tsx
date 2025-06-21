@@ -18,17 +18,32 @@ interface AccordionProps {
   setError: (error: string) => void;
 }
 
-const Accordion: React.FC<AccordionProps> = ({ title, tagArr, description, theme}) => {
+const Accordion: React.FC<AccordionProps> = ({ title, tagArr, description, theme }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const toggleAccordion = () => setIsOpen((prev) => !prev);
-
+  const getTagColor = (tagArr: string[]) => {
+    const lowerTags = tagArr.map(tag => tag.toLowerCase());
+    if (lowerTags.includes('heap') || tagArr.includes('Heap')) return 'text-white bg-[#800000] hover:bg-[#570000]'; // maroon
+    if (lowerTags.includes('hard') || tagArr.includes('Hard')) return 'bg-red-500 hover:bg-red-600';
+    if (lowerTags.includes('medium')) return 'bg-yellow-500 hover:bg-yellow-600';
+    if (lowerTags.includes('easy')) return 'bg-green-600 hover:bg-green-700';
+    if (lowerTags.includes('normal')) return 'bg-blue-600 hover:bg-blue-700';
+    return 'bg-gray-500 hover:bg-gray-600'; // default
+  };
+  const getTagColorOpen = (tagArr: string[]) => {
+    const lowerTags = tagArr.map(tag => tag.toLowerCase());
+    if (lowerTags.includes('heap')) return 'text-white bg-[#570000]'; // maroon
+    if (lowerTags.includes('hard')) return 'bg-red-600';
+    if (lowerTags.includes('medium')) return 'bg-yellow-600';
+    if (lowerTags.includes('easy')) return 'bg-green-700';
+    if (lowerTags.includes('normal')) return 'bg-blue-700';
+    return 'bg-gray-600'; // default
+  };
   return (
     <div className="accordion border border-gray-300 rounded-lg shadow-md overflow-hidden text-sm">
       <button
-        className={`accordion-header w-full flex justify-between items-center text-left px-2 py-2 font-semibold transition-all duration-300 ${
-          isOpen ? 'bg-emerald-600' : 'bg-emerald-500 hover:bg-emerald-600'
-        }`}
+        className={`accordion-header w-full flex justify-between items-center text-left px-2 py-2 font-semibold transition-all duration-300 ${isOpen ? getTagColorOpen(tagArr) : getTagColor(tagArr)}`}
         onClick={toggleAccordion}
       >
         <div className="flex items-center">
@@ -77,7 +92,7 @@ const PublicProblemComponent: React.FC<PublicProblemComponentProps> = ({ problem
                   description={problem.description}
                   tagArr={problem.tagArr}
                   theme={theme}
-                  setError={() => {}} // No error handling needed for public view
+                  setError={() => { }} // No error handling needed for public view
                 />
               </div>
             ))
