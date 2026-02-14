@@ -147,7 +147,7 @@ const MainPage: React.FC<MainPageProps> = ({ pages, addPage, theme, deletePage, 
                 </button>
                 <button
                   className={`mt-2 px-2 py-3 rounded-lg ${pageLocks[p.id]==false?"bg-gray-400":"bg-blue-500 hover:bg-blue-600"} text-white`}
-                  onClick={() => {navigator.clipboard.writeText(`${window.location.origin}/view/${p.type}/${userId}+${p.id}`);setAlert('link copied');}}
+                  onClick={() => {navigator.clipboard.writeText(`${window.location.origin}/view/${p.type}/${userId}/${p.id}`);setAlert('link copied');}}
                   title={`${pageLocks[p.id]==false ? 'Cannot share when locked' : 'Share'}`}
                   disabled={!pageLocks[p.id]}
                 >

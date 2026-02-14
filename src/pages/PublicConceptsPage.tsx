@@ -1,153 +1,210 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { isPagePublic, getComponentsOfPage } from '../services/firestore';
-import { useNavigate } from 'react-router-dom';
-import PublicConceptComponent from '../components/PublicConceptComponent';
-import type { Concept } from './ConceptsPage';
-import { throttle } from 'lodash';
+import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { doc, getDoc } from "firebase/firestore";
+import { throttle } from "lodash";
+
+import { db } from "../services/firebase";
+import { getComponentsOfPage } from "../services/firestore";
+import PublicConceptComponent from "../components/PublicConceptComponent";
+import type { Concept } from "./ConceptsPage";
 
 interface PublicConceptsPageProps {
-    theme: 'dark' | 'light';
-    setTheme: React.Dispatch<React.SetStateAction<'dark' | 'light'>>;
-    userId: string | undefined; // Optional userId prop for future use
-    name: string;
-    pageId: number; // Page ID to fetch concepts
+  theme: "dark" | "light";
+  setTheme: React.Dispatch<React.SetStateAction<"dark" | "light">>;
+  userId: string | undefined;
+  pageId: number;
 }
 
-const PublicConceptsPage: React.FC<PublicConceptsPageProps> = ({ theme, setTheme, userId, name, pageId }) => {
-    const [concepts, setConcepts] = useState<Concept[]>([]);
-    const [error, setError] = useState<string | null>(null);
-    const [isReversed, setIsReversed] = useState(false); // State to track the order of components
-    const [showScrollButton, setShowScrollButton] = useState(false); // State for scroll button visibility
-    const [showScrollUpButton, setShowScrollUpButton] = useState(false); // State for scroll-to-top button visibility
-    const pageEndRef = useRef<HTMLDivElement>(null); // Ref for the end of the page
+const PublicConceptsPage: React.FC<PublicConceptsPageProps> = ({
+  theme,
+  setTheme,
+  userId,
+  pageId,
+}) => {
+  const [concepts, setConcepts] = useState<Concept[]>([]);
+  const [pageName, setPageName] = useState<string>("");
+  const [error, setError] = useState<string | null>(null);
+  const [isReversed, setIsReversed] = useState(false);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+  const [showScrollUpButton, setShowScrollUpButton] = useState(false);
 
-    const navigate = useNavigate();
-    const toggleOrder = () => {
-        setIsReversed(prev => !prev); // Toggle the order
-    };
-    const handleScroll = () => {
-        const scrollTop = window.scrollY;
-        const windowHeight = window.innerHeight;
-        const documentHeight = document.documentElement.scrollHeight;
+  const pageEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
-        const shouldShowScrollButton = scrollTop + windowHeight < documentHeight - 100;
-        const shouldShowScrollUpButton = scrollTop > 100;
+  /* ---------------- Scroll Handling ---------------- */
 
-        if (showScrollButton !== shouldShowScrollButton) {
-            setShowScrollButton(shouldShowScrollButton);
-        }
-        if (showScrollUpButton !== shouldShowScrollUpButton) {
-            setShowScrollUpButton(shouldShowScrollUpButton);
-        }
-    };
-    const throttledHandleScroll = useRef(throttle(handleScroll, 100)).current;
+  const handleScroll = () => {
+    const scrollTop = window.scrollY;
+    const windowHeight = window.innerHeight;
+    const documentHeight = document.documentElement.scrollHeight;
 
+    setShowScrollButton(scrollTop + windowHeight < documentHeight - 100);
+    setShowScrollUpButton(scrollTop > 100);
+  };
 
-    const scrollToBottom = useCallback(() => {
-        pageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, []);
+  const throttledHandleScroll = useRef(throttle(handleScroll, 100)).current;
 
-    const scrollToTop = useCallback(() => {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    }, []);
+  const scrollToBottom = useCallback(() => {
+    pageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
 
-    useEffect(() => {
-        const loadConcepts = async () => {
-            if (!pageId) {
-                setError("Invalid page ID.");
-                return;
-            }
-            try {
-                const isPublic = await isPagePublic(userId ? userId : "", Number(pageId)); // Check if the page is public
-                if (!isPublic) {
-                    setError("This page is not public.");
-                    navigate('/error');
-                    return;
-                }
-                const components: Concept[] = await getComponentsOfPage(userId ? userId : "", Number(pageId)) as Concept[];
-                const transformed = components.map(c => ({
-                    id: c.id,
-                    title: c.title,
-                    description: c.description,
-                }));
-                setConcepts(transformed);
-            } catch (err) {
-                console.error(err);
-                setError("Failed to load page data.");
-            };
+  const scrollToTop = useCallback(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, []);
+
+  /* ---------------- Data Loading ---------------- */
+
+  useEffect(() => {
+    const loadConcepts = async () => {
+      if (!userId || !pageId) {
+        setError("Invalid page.");
+        return;
+      }
+
+      try {
+        // Fetch page document
+        const pageRef = doc(db, "users", userId, "pages", String(pageId));
+        const snap = await getDoc(pageRef);
+
+        if (!snap.exists()) {
+          navigate("/error");
+          return;
         }
 
-        loadConcepts();
-        window.addEventListener('scroll', throttledHandleScroll);
-        return () => {
-            window.removeEventListener('scroll', throttledHandleScroll);
-        };
-    }, [pageId, navigate, userId, throttledHandleScroll]);
+        const data = snap.data();
 
-    const toggleTheme = () => {
-        setTheme(theme === 'light' ? 'dark' : 'light');
+        if (!data.isPublic) {
+          navigate("/error");
+          return;
+        }
+
+        setPageName(data.name);
+
+        // Fetch concept components
+        const components = await getComponentsOfPage(userId, pageId);
+
+        const transformed: Concept[] = (components as Concept[]).map((c) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description,
+        }));
+
+        setConcepts(transformed);
+      } catch (err) {
+        console.error(err);
+        setError("Failed to load page data.");
+      }
     };
 
-    return (
-        <div className={`min-h-screen p-4 ${theme === 'dark' ? 'bg-gray-900 text-white' : 'bg-gray-100 text-black'}`}>
-            {/* Header */}
-            {/* Toggle Order Button */}
-            <div className="fixed top-26 right-4 px-4 py-2">
+    loadConcepts();
 
-            </div>
-            {/* Scroll-to-bottom button */}
-            {showScrollUpButton && (
-                <button
-                    className={`fixed bottom-16 right-4 px-4 py-2 rounded-full shadow-lg ${theme === 'dark' ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-500 hover:bg-green-600 text-white'}`}
-                    onClick={scrollToTop}
-                    title="Scroll to top"
-                >
-                    ↑
-                </button>
-            )}
-            {showScrollButton && (
-                <button
-                    className={`fixed bottom-4 right-4 px-4 py-2 rounded-full shadow-lg ${theme === 'dark' ? 'bg-blue-600 hover:bg-blue-700 text-white' : 'bg-blue-500 hover:bg-blue-600 text-white'}`}
-                    onClick={scrollToBottom}
-                    title="Scroll to bottom"
-                >
-                    ↓
-                </button>
-            )}
-            <div className="flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">Public Concept Page: {name}</h1>
-                <button
-                    className={`fixed right-20 px-4 py-2 rounded-full ${theme === 'dark' ? 'bg-purple-600 hover:bg-purple-700' : 'bg-purple-500 hover:bg-purple-600'} text-white`}
-                    onClick={toggleOrder}
-                    title={isReversed ? "Show oldest first" : "Show newest first"}
-                >
-                    {isReversed ? (<span className='material-icons'>keyboard_double_arrow_down</span>) : (<span className='material-icons'>keyboard_double_arrow_up</span>)}
-                </button>
-                <button
-                    onClick={toggleTheme}
-                    className={`px-3 py-2 rounded-full ${theme === 'dark' ? 'bg-blue-500 hover:bg-blue-600' : 'bg-blue-600 hover:bg-blue-700'} text-white`}
-                >
-                    <span className="material-icons">{theme === 'dark' ? 'light_mode' : 'dark_mode'}</span>
-                </button>
-            </div>
+    window.addEventListener("scroll", throttledHandleScroll);
+    return () => {
+      window.removeEventListener("scroll", throttledHandleScroll);
+    };
+  }, [userId, pageId, navigate, throttledHandleScroll]);
 
-            {error ? (
-                <div className="text-red-500 text-center">{error}</div>
-            ) : (
-                <div className="grid grid-cols-1 gap-4">
-                    {(isReversed ? [...concepts].reverse() : concepts).map((concept) => (
-                        <PublicConceptComponent
-                            key={concept.id}
-                            id={concept.id}
-                            title={concept.title}
-                            description={concept.description}
-                            theme={theme}
-                        />
-                    ))}
-                </div>
-            )}
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
+
+  const toggleOrder = () => {
+    setIsReversed((prev) => !prev);
+  };
+
+  /* ---------------- Render ---------------- */
+
+  return (
+    <div
+      className={`min-h-screen p-4 ${
+        theme === "dark"
+          ? "bg-gray-900 text-white"
+          : "bg-gray-100 text-black"
+      }`}
+    >
+      {/* Scroll Buttons */}
+      {showScrollUpButton && (
+        <button
+          className={`fixed bottom-16 right-4 px-4 py-2 rounded-full shadow-lg ${
+            theme === "dark"
+              ? "bg-green-600 hover:bg-green-700 text-white"
+              : "bg-green-500 hover:bg-green-600 text-white"
+          }`}
+          onClick={scrollToTop}
+          title="Scroll to top"
+        >
+          ↑
+        </button>
+      )}
+
+      {showScrollButton && (
+        <button
+          className={`fixed bottom-4 right-4 px-4 py-2 rounded-full shadow-lg ${
+            theme === "dark"
+              ? "bg-blue-600 hover:bg-blue-700 text-white"
+              : "bg-blue-500 hover:bg-blue-600 text-white"
+          }`}
+          onClick={scrollToBottom}
+          title="Scroll to bottom"
+        >
+          ↓
+        </button>
+      )}
+
+      {/* Header */}
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">
+          Public Concept Page: {pageName}
+        </h1>
+
+        <div className="flex gap-3 items-center">
+          <button
+            className={`px-4 py-2 rounded-full ${
+              theme === "dark"
+                ? "bg-purple-600 hover:bg-purple-700"
+                : "bg-purple-500 hover:bg-purple-600"
+            } text-white`}
+            onClick={toggleOrder}
+            title={isReversed ? "Show oldest first" : "Show newest first"}
+          >
+            {isReversed ? "↓" : "↑"}
+          </button>
+
+          <button
+            onClick={toggleTheme}
+            className={`px-3 py-2 rounded-full ${
+              theme === "dark"
+                ? "bg-blue-500 hover:bg-blue-600"
+                : "bg-blue-600 hover:bg-blue-700"
+            } text-white`}
+          >
+            {theme === "dark" ? "☀️" : "🌙"}
+          </button>
         </div>
-    );
+      </div>
+
+      {/* Content */}
+      {error ? (
+        <div className="text-red-500 text-center">{error}</div>
+      ) : (
+        <div className="grid grid-cols-1 gap-4">
+          {(isReversed ? [...concepts].reverse() : concepts).map(
+            (concept) => (
+              <PublicConceptComponent
+                key={concept.id}
+                id={concept.id}
+                title={concept.title}
+                description={concept.description}
+                theme={theme}
+              />
+            )
+          )}
+        </div>
+      )}
+
+      <div ref={pageEndRef} />
+    </div>
+  );
 };
 
 export default PublicConceptsPage;

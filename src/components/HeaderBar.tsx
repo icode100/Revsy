@@ -1,22 +1,20 @@
 import React, { useState, useRef, useEffect } from 'react';
 import UserIconSlider from './UserIconSlider';
 import type { PageDef } from '../pages/MainPage';
-import type { signInWithEmail, signOut } from '../services/firebaseAuth';
+// import type { signInWithEmail, signOut } from '../services/firebaseAuth';
 import { useModal } from './ModalContext';
 import { useNavigate } from 'react-router-dom';
 import { saveUserTheme } from '../services/firestore';
-
-type User = Awaited<ReturnType<typeof signInWithEmail>>;
-type nulluser = Awaited<ReturnType<typeof signOut>>;
+import type { User } from "firebase/auth";
 
 interface HeaderBarProps {
     theme: 'dark' | 'light';
     setTheme: React.Dispatch<React.SetStateAction<'dark' | 'light'>>;
-    user: User | null | nulluser;
+    user: User | null;
     setIsauth: React.Dispatch<React.SetStateAction<boolean>>;
     isPaneOpen: boolean;
     setIsPaneOpen: React.Dispatch<React.SetStateAction<boolean>>;
-    setUser: React.Dispatch<React.SetStateAction<User | null | nulluser>>;
+    setUser: React.Dispatch<React.SetStateAction<User | null>>;
     setError: React.Dispatch<React.SetStateAction<string | null>>;
     pages: PageDef[];
 }
@@ -123,7 +121,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                                 }`}
                         >
                             <span className="material-icons">
-                                {theme === 'dark' ? 'light_mode' : 'dark_mode'}
+                                {theme === "dark" ? "☀️" : "🌙"}
                             </span>
                         </button>
                     </div>

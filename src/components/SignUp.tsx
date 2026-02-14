@@ -2,14 +2,10 @@ import React, { useState } from 'react'
 import {
     signUpWithEmail,
     signInWithGoogle,
-    signInWithEmail,
-    signOut
 } from "../services/firebaseAuth";
 import { useModal } from './ModalContext';
 import GoogleLogo from '/google.png?url';
-
-type User = Awaited<ReturnType<typeof signInWithEmail>>;
-type nulluser = Awaited<ReturnType<typeof signOut>>;
+import type { User } from "firebase/auth";
 
 
 interface SignUpProps {
@@ -18,7 +14,7 @@ interface SignUpProps {
     setIsauth: (isauth: boolean) => void
     isSignIn: boolean,
     setSignIn: (isSignIn: boolean) => void
-    setUser: React.Dispatch<React.SetStateAction<User | null | nulluser>>;
+    setUser: React.Dispatch<React.SetStateAction<User | null >>;
 }
 
 

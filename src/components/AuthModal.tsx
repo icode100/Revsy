@@ -1,17 +1,14 @@
 import React, { useState } from 'react'
 import SignIn from './SignIn'
 import SignUp from './SignUp';
-import { signInWithEmail, signOut } from '../services/firebaseAuth';
-type User = Awaited<ReturnType<typeof signInWithEmail>>;
-type nulluser = Awaited<ReturnType<typeof signOut>>;
-
+import type { User } from "firebase/auth";
 
 
 interface AuthModalProps {
     theme: "dark" | "light";
     isauth: boolean
     setIsauth: (auth: boolean) => void
-    setUser: React.Dispatch<React.SetStateAction<User | null | nulluser>>;
+    setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 

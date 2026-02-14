@@ -1,16 +1,13 @@
 // components/UserIconSlider.tsx
 import React from 'react';
 import { signOut } from '../services/firebaseAuth';
-import type { signInWithEmail } from '../services/firebaseAuth';
 import { useNavigate } from 'react-router-dom';
-type nulluser = Awaited<ReturnType<typeof signOut>>;
-
-type User = Awaited<ReturnType<typeof signInWithEmail>>;
+import type { User } from "firebase/auth";
 interface UserIconSliderProps {
   isPaneOpen: boolean;
   setIsPaneOpen: (isPaneOpen: boolean) => void;
   theme: "dark" | "light"
-  setUser: React.Dispatch<React.SetStateAction<User | null | nulluser>>;
+  setUser: React.Dispatch<React.SetStateAction<User | null>>;
   loading:boolean,
   setLoading:(loading:boolean)=>void
   setError:React.Dispatch<React.SetStateAction<string | null>>
@@ -26,10 +23,10 @@ const UserIconSlider: React.FC<UserIconSliderProps> = ({ isPaneOpen, setIsPaneOp
     try {
       setLoading(true);
       setError(null);
-      const user = await signOut();
-      setUser(user);
-      console.log(user)
-      console.log(typeof user);
+      await signOut();
+      setUser(null);
+      // console.log(user)
+      // console.log(typeof user);
       setLoading(false);
       navigate('/');
       // setUser(user);

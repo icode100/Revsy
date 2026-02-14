@@ -2,15 +2,13 @@ import React, {useState } from 'react'
 import {
     signInWithEmail,
     signInWithGoogle,
-    signOut
 } from "../services/firebaseAuth";
 import { useModal } from './ModalContext';
 import GoogleLogo from "/google.png?url"
 // import { onAuthStateChanged } from "firebase/auth"; // Import onAuthStateChanged
 // import { auth } from "../services/firebaseAuth"; // Import the auth instance
 
-type User = Awaited<ReturnType<typeof signInWithEmail>>;
-type nulluser = Awaited<ReturnType<typeof signOut>>;
+import type { User } from "firebase/auth";
 
 interface SignInProps {
     theme: "dark" | "light";
@@ -18,7 +16,7 @@ interface SignInProps {
     setIsauth: (isauth: boolean) => void
     isSignIn: boolean,
     setSignIn: (isSignIn: boolean) => void
-    setUser: React.Dispatch<React.SetStateAction<User | null | nulluser>>;
+    setUser: React.Dispatch<React.SetStateAction<User | null>>;
 }
 
 
