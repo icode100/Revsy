@@ -9,7 +9,6 @@ import { db } from "../services/firebase";
 import type { ProblemComponentType } from "./ProblemsPage";
 import { FirebaseError } from "firebase/app";
 
-
 interface PublicProblemsPageProps {
   theme: "dark" | "light";
   setTheme: React.Dispatch<React.SetStateAction<"dark" | "light">>;
@@ -33,9 +32,28 @@ const PublicProblemsPage: React.FC<PublicProblemsPageProps> = ({
   const [showScrollUpButton, setShowScrollUpButton] = useState(false);
 
   const pageEndRef = useRef<HTMLDivElement>(null);
+  const headerRef = useRef<HTMLDivElement>(null); // Ref for title animation
   const navigate = useNavigate();
 
-  /* ------------------ Scroll Handling ------------------ */
+  /* ------------------ Scroll Animations ------------------ */
+
+  useEffect(() => {
+    const handleVisualScroll = () => {
+      if (!headerRef.current) return;
+      const scrollY = window.scrollY;
+      
+      const opacity = Math.max(0, 1 - scrollY / 300);
+      const scale = Math.max(0.8, 1 - scrollY / 1000);
+      const translateY = Math.min(50, scrollY / 2);
+
+      headerRef.current.style.opacity = opacity.toString();
+      headerRef.current.style.transform = `scale(${scale}) translateY(-${translateY}px)`;
+      headerRef.current.style.visibility = opacity <= 0 ? 'hidden' : 'visible';
+    };
+
+    window.addEventListener('scroll', handleVisualScroll);
+    return () => window.removeEventListener('scroll', handleVisualScroll);
+  }, []);
 
   const handleScroll = () => {
     const scrollTop = window.scrollY;
@@ -66,7 +84,6 @@ const PublicProblemsPage: React.FC<PublicProblemsPageProps> = ({
       }
 
       try {
-        // Fetch page document
         const pageRef = doc(db, "users", userId, "pages", String(pageId));
         const snap = await getDoc(pageRef);
 
@@ -76,132 +93,99 @@ const PublicProblemsPage: React.FC<PublicProblemsPageProps> = ({
         }
 
         const data = snap.data();
-
         if (!data.isPublic) {
           navigate("/error");
           return;
         }
 
         setPageName(data.name);
-
-        // Fetch components
         const components = await getComponentsOfPage(userId, pageId);
         setProblemComponents(components as ProblemComponentType[]);
       } catch (err: unknown) {
         console.error(err);
-
-        if (err instanceof FirebaseError) {
-          if (err.code === "permission-denied") {
-            navigate("/error");
-            return;
-          }
+        if (err instanceof FirebaseError && err.code === "permission-denied") {
+          navigate("/error");
+          return;
         }
-
         setError("Failed to load page data.");
       }
     };
 
     loadPageData();
-
     window.addEventListener("scroll", throttledHandleScroll);
-    return () => {
-      window.removeEventListener("scroll", throttledHandleScroll);
-    };
+    return () => window.removeEventListener("scroll", throttledHandleScroll);
   }, [userId, pageId, navigate, throttledHandleScroll]);
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
-
-  const toggleOrder = () => {
-    setIsReversed((prev) => !prev);
-  };
-
-  /* ------------------ Render ------------------ */
+  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
+  const toggleOrder = () => setIsReversed((prev) => !prev);
 
   return (
-    <div
-      className={`min-h-screen p-4 ${theme === "dark"
-        ? "bg-gray-900 text-white"
-        : "bg-gray-100 text-black"
-        }`}
-    >
-      {/* Scroll Buttons */}
-      {showScrollUpButton && (
+    <div className="page-container">
+      
+      {/* --- Floating Action Buttons --- */}
+      <div className="fixed top-24 right-6 z-40 flex flex-col gap-3">
         <button
-          className={`fixed bottom-16 right-4 px-4 py-2 rounded-full shadow-lg ${theme === "dark"
-            ? "bg-green-600 hover:bg-green-700 text-white"
-            : "bg-green-500 hover:bg-green-600 text-white"
-            }`}
-          onClick={scrollToTop}
-          title="Scroll to top"
+          className="fab-glass"
+          onClick={toggleOrder}
+          title={isReversed ? "Show oldest first" : "Show newest first"}
         >
-          ↑
+          <span className="material-icons">{isReversed ? 'keyboard_double_arrow_down' : 'keyboard_double_arrow_up'}</span>
         </button>
-      )}
-
-      {showScrollButton && (
         <button
-          className={`fixed bottom-4 right-4 px-4 py-2 rounded-full shadow-lg ${theme === "dark"
-            ? "bg-blue-600 hover:bg-blue-700 text-white"
-            : "bg-blue-500 hover:bg-blue-600 text-white"
-            }`}
-          onClick={scrollToBottom}
-          title="Scroll to bottom"
+          onClick={toggleTheme}
+          className="fab-glass"
+          title="Toggle Theme"
         >
-          ↓
+          <span className="material-icons">{theme === "dark" ? "light_mode" : "dark_mode"}</span>
         </button>
-      )}
+      </div>
 
-      {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">
-          Public Problem Page: {pageName}
-        </h1>
-
-        <div className="flex gap-3 items-center">
-          <button
-            className={`px-4 py-2 rounded-full ${theme === "dark"
-              ? "bg-purple-600 hover:bg-purple-700"
-              : "bg-purple-500 hover:bg-purple-600"
-              } text-white`}
-            onClick={toggleOrder}
-            title={isReversed ? "Show oldest first" : "Show newest first"}
-          >
-            {isReversed ? "↓" : "↑"}
+      <div className="fixed bottom-6 right-6 z-40 flex flex-col gap-3">
+        {showScrollUpButton && (
+          <button className="fab-glass fab-primary" onClick={scrollToTop}>
+            <span className="material-icons">arrow_upward</span>
           </button>
-
-          <button
-            onClick={toggleTheme}
-            className={`px-3 py-2 rounded-full ${theme === "dark"
-              ? "bg-blue-500 hover:bg-blue-600"
-              : "bg-blue-600 hover:bg-blue-700"
-              } text-white`}
-          >
-            {theme === "dark" ? "☀️" : "🌙"}
+        )}
+        {showScrollButton && (
+          <button className="fab-glass fab-primary" onClick={scrollToBottom}>
+            <span className="material-icons">arrow_downward</span>
           </button>
+        )}
+      </div>
+
+      {/* --- Page Header with Animation --- */}
+      <div className="relative mb-16 text-center h-[120px] flex items-center justify-center pointer-events-none">
+        <div ref={headerRef} className="w-full flex flex-col items-center justify-center origin-center transition-transform duration-75 ease-out">
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-blue-500/10 rounded-full blur-[80px]" />
+            <h1 className="text-page-title relative z-10">{pageName}</h1>
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/5 backdrop-blur-md text-xs font-medium text-gray-500 dark:text-gray-400 relative z-10">
+                <span className="w-1.5 h-1.5 rounded-full bg-blue-500 animate-pulse"></span>
+                Public Problem Set • {problemComponents.length} Sections
+            </div>
         </div>
       </div>
 
-      {/* Content */}
-      {error ? (
-        <div className="text-red-500 text-center">{error}</div>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {(isReversed
-            ? [...problemComponents].reverse()
-            : problemComponents
-          ).map((component) => (
-            <PublicProblemComponent
-              key={component.id}
-              id={component.id}
-              problems={component.problems}
-              note={component.note}
-              theme={theme}
-            />
-          ))}
-        </div>
-      )}
+      {/* --- Content Area --- */}
+      <div className="max-w-6xl mx-auto">
+        {error ? (
+          <div className="glass-panel p-8 text-red-500 text-center rounded-2xl">{error}</div>
+        ) : (
+          <div className="flex flex-col gap-8">
+            {(isReversed
+              ? [...problemComponents].reverse()
+              : problemComponents
+            ).map((component) => (
+              <PublicProblemComponent
+                key={component.id}
+                id={component.id}
+                problems={component.problems}
+                note={component.note}
+                theme={theme}
+              />
+            ))}
+          </div>
+        )}
+      </div>
 
       <div ref={pageEndRef} />
     </div>

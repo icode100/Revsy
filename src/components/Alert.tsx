@@ -1,38 +1,58 @@
-// components/Alert.tsx
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 
 interface AlertProps {
   message: string;
+  type: 'error' | 'alert';
   onClose: () => void;
-  type:string;
 }
 
-const Alert: React.FC<AlertProps> = ({ message, onClose, type }) => {
-  const [isVisible, setIsVisible] = useState(true);
-
+const Alert: React.FC<AlertProps> = ({ message, type, onClose }) => {
   useEffect(() => {
-    // Automatically close the alert after 2 seconds
     const timer = setTimeout(() => {
-      setIsVisible(false);
       onClose();
     }, 2000);
 
-    return () => clearTimeout(timer); // Cleanup the timer on unmount
+    return () => clearTimeout(timer);
   }, [onClose]);
 
-  if (!isVisible) return null;
+  const isError = type === 'error';
 
   return (
-    <div className={`fixed top-25 right-0 transform -translate-x-1/2 ${type==='error'?"bg-red-500":"bg-yellow-500"} text-white px-4 py-2 rounded shadow-lg w-80`}>
-      <div className="flex items-center justify-between">
-        <span>{message}</span>
+    <div className={`alert-toast ${isError ? 'alert-error' : 'alert-info'}`} role="alert">
+      <div className="relative">
+        <svg className="loader-svg" viewBox="0 0 36 36">
+          <circle
+            className="loader-bg"
+            strokeWidth="3.5"
+            fill="transparent"
+            r="16"
+            cx="18"
+            cy="18"
+          />
+          <circle
+            className="loader-circle"
+            strokeWidth="3.5"
+            fill="transparent"
+            r="16"
+            cx="18"
+            cy="18"
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center">
+          <span className="material-icons text-[14px]">
+            {isError ? 'priority_high' : 'notifications'}
+          </span>
+        </div>
       </div>
-      {/* Loader animation */}
-      <div className={`relative w-full h-1 mt-2 ${type==='error'?"bg-red-300":"bg-yellow-300"} rounded`}>
-        <div
-          className={`absolute top-0 left-0 h-full ${type==='error'?"bg-red-700":"bg-yellow-700"} rounded animate-time-bar`}          style={{ animationDuration: '2s' }}
-        ></div>
-      </div>
+
+      <span className="font-semibold text-sm flex-grow leading-snug">{message}</span>
+
+      <button 
+        onClick={onClose}
+        className="p-1 hover:bg-black/5 dark:hover:bg-white/10 rounded-lg transition-colors"
+      >
+        <span className="material-icons text-lg">close</span>
+      </button>
     </div>
   );
 };

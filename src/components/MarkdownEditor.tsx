@@ -1,9 +1,6 @@
-// /* eslint-disable @typescript-eslint/no-unused-vars */
 import { useState } from "react";
 import "katex/dist/katex.min.css";
 import MarkdownRenderer from "./MarkdownRenderer";
-
-
 
 interface MarkdownEditorProps {
   value: string;
@@ -93,55 +90,38 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
   };
 
   return (
-    <div
-      className={`border rounded-lg shadow-sm ${theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
-        }`}
-    >
-      <div
-        className={`flex flex-col p-2 border-b ${theme === "dark" ? "bg-gray-700" : "bg-gray-50"
-          }`}
-      >
+    <div className="editor-glass shadow-sm">
+      <div className="editor-toolbar">
         <div className="flex justify-between mb-2">
           <div className="space-x-2">
             <button
-              className={`px-3 py-1 rounded ${!isPreview
-                ? theme === "dark"
-                  ? "bg-blue-500 text-white"
-                  : "bg-blue-500 text-white"
-                : theme === "dark"
-                  ? "bg-gray-600 text-white"
-                  : "bg-gray-200"
-                }`}
+              className={`editor-btn ${!isPreview ? 'editor-btn-active' : ''}`}
               onClick={() => setIsPreview(false)}
             >
-              <span className="material-icons">edit</span>
+              <div className="flex items-center gap-1">
+                <span className="material-icons text-sm">edit</span>
+                <span>Edit</span>
+              </div>
             </button>
             <button
-              className={`px-3 py-1 rounded ${isPreview
-                ? theme === "dark"
-                  ? "bg-blue-500 text-white"
-                  : "bg-blue-500 text-white"
-                : theme === "dark"
-                  ? "bg-gray-600 text-white"
-                  : "bg-gray-200"
-                }`}
+              className={`editor-btn ${isPreview ? 'editor-btn-active' : ''}`}
               onClick={() => setIsPreview(true)}
             >
-              <span className="material-icons">visibility</span>
+              <div className="flex items-center gap-1">
+                <span className="material-icons text-sm">visibility</span>
+                <span>Preview</span>
+              </div>
             </button>
           </div>
         </div>
 
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2 items-center">
           {/* Heading levels */}
-          <div className="flex space-x-1 border-r pr-2">
-            {[1, 2, 3, 4, 5, 6].map((level) => (
+          <div className="flex space-x-1 border-r border-gray-300 dark:border-white/10 pr-2">
+            {[1, 2, 3].map((level) => (
               <button
                 key={level}
-                className={`px-2 py-1 rounded text-sm font-semibold ${theme === "dark"
-                  ? "text-gray-300 hover:bg-gray-600"
-                  : "text-gray-600 hover:bg-gray-200"
-                  } font-mono`}
+                className="editor-btn font-mono"
                 onClick={() => handleAddHeading(level)}
                 title={`Heading ${level}`}
               >
@@ -150,60 +130,45 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
             ))}
           </div>
 
-          {/* Existing formatting buttons */}
-          <div className="flex space-x-2">
+          {/* Formatting buttons */}
+          <div className="flex space-x-1">
             <button
-              className={`px-2 py-1 rounded ${theme === "dark"
-                ? "text-gray-300 hover:bg-gray-600"
-                : "text-gray-600 hover:bg-gray-200"
-                } font-mono`}
+              className="editor-btn font-mono font-bold"
               onClick={() => onChange(value + "**bold**")}
+              title="Bold"
             >
               B
             </button>
             <button
-              className={`px-2 py-1 rounded ${theme === "dark"
-                ? "text-gray-300 hover:bg-gray-600"
-                : "text-gray-600 hover:bg-gray-200"
-                } font-mono`}
+              className="editor-btn font-mono italic"
               onClick={() => onChange(value + "*italic*")}
+              title="Italic"
             >
               I
             </button>
             <button
-              className={`px-2 py-1 rounded ${theme === "dark"
-                ? "text-gray-300 hover:bg-gray-600"
-                : "text-gray-600 hover:bg-gray-200"
-                }`}
+              className="editor-btn font-mono"
               onClick={() => onChange(value + "`code`")}
+              title="Inline Code"
             >
               {"</>"}
             </button>
             <button
-              className={`px-2 py-1 rounded ${theme === "dark"
-                ? "text-gray-300 hover:bg-gray-600"
-                : "text-gray-600 hover:bg-gray-200"
-                } font-serif`}
+              className="editor-btn font-serif"
               onClick={() => handleAddList("bullet")}
+              title="Bullet List"
             >
               •
             </button>
             <button
-              className={`px-2 py-1 rounded ${theme === "dark"
-                ? "text-gray-300 hover:bg-gray-600"
-                : "text-gray-600 hover:bg-gray-200"
-                }`}
+              className="editor-btn"
               onClick={() => handleAddList("number")}
+              title="Numbered List"
             >
               1.
             </button>
-
-
             <button
-              className={`px-2 py-1 rounded ${theme === "dark"
-                ? "text-gray-300 hover:bg-gray-600"
-                : "text-gray-600 hover:bg-gray-200"
-                } font-serif`}
+              className="editor-btn font-serif"
               onClick={() => onChange(value + "\n$$ $$\n")}
               title="Insert Math Equation"
             >
@@ -213,19 +178,18 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
         </div>
       </div>
 
-      <div className="p-4">
+      <div className="flex-grow">
         {isPreview ? (
-          <MarkdownRenderer content={value} theme={theme} />
+          <div className="p-2">
+             <MarkdownRenderer content={value} theme={theme} />
+          </div>
         ) : (
           <textarea
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
-            className={`w-full h-64 p-2 border rounded font-sans ${theme === "dark"
-              ? "bg-gray-800 text-white border-gray-600 placeholder-gray-400"
-              : "bg-white text-black border-gray-300 placeholder-gray-600"
-              }`}
-            placeholder="Write your notes (markdown supported)"
+            className="editor-textarea"
+            placeholder="Write your notes (markdown supported)..."
           />
         )}
       </div>

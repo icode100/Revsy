@@ -5,10 +5,11 @@ import type { Problem } from './ProblemComponent';
 
 interface ProblemFormProps {
     onSubmit: (data: Problem) => void;
+    // theme prop is kept for interface compatibility but styling is now handled via CSS classes
     theme: "dark" | "light";
 }
 
-const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
+const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit }) => {
     const [title, setTitle] = useState('');
     const [description, setDescription] = useState('');
     const [url, setUrl] = useState('');
@@ -55,6 +56,7 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
         setTitle('');
         setDescription('');
         setUrl('');
+        setTags('');
         setIsLeetCode(false);
     };
 
@@ -68,53 +70,41 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
 
 
     return (
-        <form
-            onSubmit={handleSubmit}
-            className={`p-6 rounded-lg shadow-md ${theme === "dark" ? "bg-gray-800 text-white" : "bg-white text-black"
-                }`}
-        >
-            <div className="mb-4">
-                <label
-                    htmlFor="problem-url"
-                    className="block text-sm font-medium mb-2"
-                >
+        <form onSubmit={handleSubmit} className="form-glass shadow-lg">
+            
+            <div className="mb-6">
+                <label htmlFor="problem-url" className="label-text">
                     Problem URL
                 </label>
-                <div className="flex gap-2">
+                <div className="flex flex-col sm:flex-row gap-3">
                     <input
                         id="problem-url"
                         type="text"
                         value={url}
-                        required
                         onChange={(e) => setUrl(e.target.value)}
                         placeholder="Enter LeetCode problem URL"
-                        className={`flex-1 px-4 py-2 rounded border ${theme === "dark"
-                                ? "bg-gray-700 border-gray-600 text-white"
-                                : "bg-gray-100 border-gray-300 text-black"
-                            }`}
+                        className="input-field flex-1"
                     />
 
                     <button
                         type="button"
                         onClick={handleFetchDescription}
                         disabled={loading}
-                        className={`px-4 py-2 rounded ${loading
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : theme === "dark"
-                                    ? "bg-blue-600 hover:bg-blue-700 text-white"
-                                    : "bg-blue-500 hover:bg-blue-600 text-white"
-                            }`}
+                        className="btn-fetch"
                     >
-                        {loading ? "Fetching..." : "Fetch Description"}
+                        {loading ? "Fetching..." : "Fetch"}
                     </button>
                 </div>
             </div>
-            {error && <p className="text-red-500 mb-4">{error}</p>}
-            <div className="mb-4">
-                <label
-                    htmlFor="problem-title"
-                    className="block text-sm font-medium mb-2"
-                >
+
+            {error && (
+                <div className="mb-6 p-4 rounded-xl bg-red-50 text-red-600 border border-red-200 dark:bg-red-900/20 dark:text-red-300 dark:border-red-500/30 text-sm font-medium">
+                    {error}
+                </div>
+            )}
+
+            <div className="mb-6">
+                <label htmlFor="problem-title" className="label-text">
                     Title
                 </label>
                 <input
@@ -123,82 +113,66 @@ const ProblemForm: React.FC<ProblemFormProps> = ({ onSubmit, theme }) => {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     required
-                    className={`w-full px-4 py-2 rounded border ${theme === "dark"
-                            ? "bg-gray-700 border-gray-600 text-white"
-                            : "bg-gray-100 border-gray-300 text-black"
-                        }`}
+                    className="input-field"
+                    placeholder="Problem title"
                 />
             </div>
-            <div className="mb-4">
-                <label
-                    htmlFor="problem-description"
-                    className="block text-sm font-medium mb-2"
-                >
+
+            <div className="mb-6">
+                <label htmlFor="problem-description" className="label-text">
                     Description
                 </label>
-                <textarea
-                    id="problem-description"
-                    ref={descriptionRef}
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    required={!isLeetCode}
-                    placeholder={
-                        isLeetCode
-                            ? "Fetched description will appear here..."
-                            : "Enter your own description..."
-                    }
-                    className={`w-full px-4 py-2 rounded border resize-none ${theme === "dark"
-                            ? "bg-gray-700 border-gray-600 text-white"
-                            : "bg-gray-100 border-gray-300 text-black"
-                        }`}
-                    style={{ overflow: "hidden" }}
-                />
+                <div className="relative">
+                    <textarea
+                        id="problem-description"
+                        ref={descriptionRef}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                        required={!isLeetCode}
+                        placeholder={
+                            isLeetCode
+                                ? "Fetched description will appear here..."
+                                : "Enter your own description..."
+                        }
+                        className="input-field min-h-[120px] resize-y"
+                        style={{ overflow: "hidden" }}
+                    />
+                </div>
 
-                {description !== "" ? (<button
-                    type="button"
-                    onClick={handleSummarize}
-                    disabled={!description || loading}
-                    className={`mt-2 px-4 py-2 rounded ${loading
-                            ? "bg-gray-400 cursor-not-allowed"
-                            : theme === "dark"
-                                ? "bg-green-600 hover:bg-green-700 text-white"
-                                : "bg-green-500 hover:bg-green-600 text-white"
-                        }`}
-                >
-                    {loading ? "Summarizing..." : "Summarize with AI"}
-                </button>) : (<button className='mt-2 px-4 py-2 rounded bg-gray-400' disabled={true}> No Description</button>)}
+                <div className="flex justify-end">
+                    <button
+                        type="button"
+                        onClick={handleSummarize}
+                        disabled={!description || loading}
+                        className="btn-summarize"
+                    >
+                        <span className="material-icons text-sm">summarize</span>
+                        {loading ? "Summarizing..." : "Summarize with AI"}
+                    </button>
+                </div>
             </div>
-            <div className="mb-4">
-                <label
-                    htmlFor="problem-title"
-                    className="block text-sm font-medium mb-2"
-                >
-                    Tags
+
+            <div className="mb-8">
+                <label htmlFor="tags" className="label-text">
+                    Tags (Max 3)
                 </label>
                 <input
-                    id="problem-title"
+                    id="tags"
                     type="text"
                     value={tags}
                     onChange={(e) => setTags(e.target.value)}
                     required
-                    className={`w-full px-4 py-2 rounded border ${theme === "dark"
-                            ? "bg-gray-700 border-gray-600 text-white"
-                            : "bg-gray-100 border-gray-300 text-black"
-                        }`}
-                    placeholder="Enter top 3 tags separated by commas"
+                    className="input-field"
+                    placeholder="Array, DP, Easy..."
                 />
             </div>
+
             <button
                 type="submit"
                 disabled={loading}
-                className={`w-full px-4 py-2 rounded ${loading
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : theme === "dark"
-                            ? "bg-purple-600 hover:bg-purple-700 text-white"
-                            : "bg-purple-500 hover:bg-purple-600 text-white"
-                    }`}
+                className="btn-submit"
             >
-                Submit
+                Add Problem
             </button>
         </form>
     );

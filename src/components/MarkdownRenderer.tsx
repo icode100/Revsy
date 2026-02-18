@@ -6,9 +6,7 @@ import remarkBreaks from "remark-breaks";
 import rehypeKatex from "rehype-katex";
 import remarkGfm from "remark-gfm";
 import "katex/dist/katex.min.css";
-import { CodeBlock, dracula, github } from "react-code-blocks";
-
-// Register the languages you want to use
+import { CodeBlock, vs2015, googlecode } from "react-code-blocks";
 
 interface MarkdownRendererProps {
     content: string;
@@ -17,47 +15,14 @@ interface MarkdownRendererProps {
 
 const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) => {
     return (
-        <div className="prose prose-slate max-w-none break-words whitespace-pre-wrap p-4">
+        // Replaced 'prose' with our custom 'markdown-content' class for unified styling
+        <div className="markdown-content p-4">
             <ReactMarkdown
                 remarkPlugins={[remarkMath, remarkGfm, remarkBreaks]}
                 rehypePlugins={[rehypeKatex]}
                 components={{
-                    h1: ({ node, ...props }) => (
-                        <h1 className="text-4xl font-bold" {...props} />
-                    ),
-                    h2: ({ node, ...props }) => (
-                        <h2 className="text-3xl font-bold" {...props} />
-                    ),
-                    h3: ({ node, ...props }) => (
-                        <h3 className="text-2xl font-bold" {...props} />
-                    ),
-                    h4: ({ node, ...props }) => (
-                        <h4 className="text-xl font-bold" {...props} />
-                    ),
-                    h5: ({ node, ...props }) => (
-                        <h5 className="text-lg font-bold" {...props} />
-                    ),
-                    h6: ({ node, ...props }) => (
-                        <h6 className="text-base font-bold" {...props} />
-                    ),
-                    ul: ({ node, children, ...props }) => {
-                        const depth = node?.position?.start?.column ?? 0;
-                        const levelClass =
-                            depth < 5
-                                ? 'list-disc'
-                                : depth < 9
-                                    ? 'list-[*]'
-                                    : 'list-[+]';
-
-                        return (
-                            <ul className={`${levelClass} ml-6 pl-2`} {...props}>
-                                {children}
-                            </ul>
-                        );
-                    },
-                    ol: ({ node, ...props }) => (
-                        <ol className="list-decimal ml-6" {...props} />
-                    ),
+                    // Only intercept code blocks for syntax highlighting.
+                    // All other elements (h1, p, ul, ol, blockquote) are styled via CSS in style.css
                     code({
                         node,
                         inline,
@@ -69,22 +34,16 @@ const MarkdownRenderer: React.FC<MarkdownRendererProps> = ({ content, theme }) =
                         const language = match ? match[1] : "";
 
                         return !inline && match ? (
-                            <div className='text-sm'>
+                            <div className='code-block-wrapper'>
                                 <CodeBlock
                                     text={String(children).replace(/\n$/, "")}
                                     language={language}
-                                    theme={theme === "dark" ? dracula : github}
+                                    showLineNumbers={false}
+                                    theme={theme === "dark" ? vs2015 : googlecode}
                                 />
                             </div>
                         ) : (
-                            <code
-                                className={`${className || ''} break-words whitespace-pre-wrap rounded px-1 py-0.5`}
-                                style={{
-                                    backgroundColor: theme === "dark" ? "#2d3748" : "#f3f4f6", // Adjust background color
-                                    color: theme === "dark" ? "#f7fafc" : "#1a202c", // Adjust text color
-                                }}
-                                {...props}
-                            >
+                            <code className={className} {...props}>
                                 {children}
                             </code>
                         );

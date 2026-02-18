@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import MarkdownRenderer from './MarkdownRenderer';
 import type { Problem } from './ProblemComponent';
-// import Accordion from './Accordion';
+import ExpandModal from './ExpandModal';
+import { useModal } from '../components/ModalContext';
 
 interface PublicProblemComponentProps {
   id: string;
@@ -15,98 +16,152 @@ interface AccordionProps {
   description: string;
   tagArr: string[];
   theme?: 'dark' | 'light';
-  setError: (error: string) => void;
+  onExpand: () => void;
 }
 
-const Accordion: React.FC<AccordionProps> = ({ title, tagArr, description, theme }) => {
+const Accordion: React.FC<AccordionProps> = ({ title, tagArr, description, theme, onExpand }) => {
   const [isOpen, setIsOpen] = React.useState(false);
 
   const toggleAccordion = () => setIsOpen((prev) => !prev);
-  const getTagColor = (tagArr: string[]) => {
-    const lowerTags = tagArr.map(tag => tag.toLowerCase());
-    if (lowerTags.includes('heap') || tagArr.includes('Heap')) return 'text-white bg-[#800000] hover:bg-[#570000]'; // maroon
-    if (lowerTags.includes('hard') || tagArr.includes('Hard')) return 'bg-red-500 hover:bg-red-600';
-    if (lowerTags.includes('medium')) return 'bg-yellow-500 hover:bg-yellow-600';
-    if (lowerTags.includes('easy')) return 'bg-green-600 hover:bg-green-700';
-    if (lowerTags.includes('normal')) return 'bg-blue-600 hover:bg-blue-700';
-    return 'bg-gray-500 hover:bg-gray-600'; // default
+  
+  const getBadgeStyle = (tag: string) => {
+    const t = tag.toLowerCase();
+    if (t === 'hard') return 'badge-red';
+    if (t === 'medium') return 'badge-yellow';
+    if (t === 'easy') return 'badge-green';
+    if (t === 'heap') return 'badge-maroon';
+    if (['dp', 'graph', 'tree', 'normal'].includes(t)) return 'badge-blue';
+    return 'badge-gray';
   };
-  const getTagColorOpen = (tagArr: string[]) => {
-    const lowerTags = tagArr.map(tag => tag.toLowerCase());
-    if (lowerTags.includes('heap')) return 'text-white bg-[#570000]'; // maroon
-    if (lowerTags.includes('hard')) return 'bg-red-600';
-    if (lowerTags.includes('medium')) return 'bg-yellow-600';
-    if (lowerTags.includes('easy')) return 'bg-green-700';
-    if (lowerTags.includes('normal')) return 'bg-blue-700';
-    return 'bg-gray-600'; // default
+
+  const getDifficultyBorder = (tags: string[]) => {
+    const lowerTags = tags.map(t => t.toLowerCase());
+    if (lowerTags.includes('hard')) return 'border-hard';
+    if (lowerTags.includes('medium')) return 'border-medium';
+    if (lowerTags.includes('easy')) return 'border-easy';
+    return 'border-default';
   };
+
   return (
-    <div className="accordion border border-gray-300 rounded-lg shadow-md overflow-hidden text-sm">
+    <div className={`accordion-glass mb-3 ${getDifficultyBorder(tagArr)} overflow-hidden`}>
       <button
-        className={`accordion-header w-full flex justify-between items-center text-left px-2 py-2 font-semibold transition-all duration-300 ${isOpen ? getTagColorOpen(tagArr) : getTagColor(tagArr)}`}
+        className={`accordion-header group text-sm ${isOpen ? 'bg-gray-50/50 dark:bg-white/5' : ''}`}
         onClick={toggleAccordion}
       >
-        <div className="flex items-center">
-          <span>{title}</span>
-          {tagArr.length > 0 && (
-            <span className="ml-2 text-xs text-gray-300">
-              {tagArr.map((tag, index) => (
-                <span key={index} className="inline-block mr-1 px-1 py-0.5 bg-gray-200 rounded-full text-black">
-                  {tag}
-                </span>
-              ))}
+        <div className="flex justify-between items-center w-full">
+          <div className="flex items-center gap-2">
+            <span className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-500 transition-colors">
+                {title}
             </span>
-          )}
+            <div className="hidden sm:flex gap-1">
+              {tagArr.slice(0, 2).map((tag, idx) => (
+                <span key={idx} className={`badge scale-90 ${getBadgeStyle(tag)}`}>{tag}</span>
+              ))}
+            </div>
+          </div>
+          <span className={`material-icons text-gray-400 transition-transform ${isOpen ? 'rotate-180' : ''}`}>
+            expand_more
+          </span>
         </div>
-        <span className="material-icons">{isOpen ? 'expand_less' : 'expand_more'}</span>
       </button>
-      {isOpen && (
-        <div className={`accordion-content ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-50'} px-2 py-2`}>
-          <MarkdownRenderer content={description} theme={theme} />
+
+      <div className={`grid transition-all duration-300 ${isOpen ? 'grid-rows-[1fr] opacity-100' : 'grid-rows-[0fr] opacity-0'}`}>
+        <div className="overflow-hidden">
+          <div className="accordion-scroll-box custom-scrollbar !max-h-[200px]">
+            <MarkdownRenderer content={description} theme={theme} />
+          </div>
+          <div className="accordion-actions !py-2 !px-4">
+             <button className="btn-expand" onClick={onExpand}>
+                <span className="material-icons text-[14px]">open_in_full</span>
+                Expand
+            </button>
+          </div>
         </div>
-      )}
+      </div>
     </div>
   );
 };
 
 const PublicProblemComponent: React.FC<PublicProblemComponentProps> = ({ problems, note, theme }) => {
+  const [expandedContent, setExpandedContent] = useState<{ title: string, description: string, tagArr: string[] } | null>(null);
+  const { openModal, closeModal } = useModal();
+
+  const handleExpandProblem = (p: Problem) => {
+    setExpandedContent({ title: p.title, description: p.description, tagArr: p.tagArr });
+    openModal();
+  };
+
+  const handleExpandNotes = () => {
+    setExpandedContent({ title: "Section Notes", description: note, tagArr: [] });
+    openModal();
+  };
+
+  const handleClose = () => {
+    setExpandedContent(null);
+    closeModal();
+  };
+
   return (
-    <div className={`p-2 rounded-lg shadow-md ${theme === 'dark' ? 'bg-gray-800 text-white' : 'bg-white text-black'}`}>
-      <div className="grid grid-cols-2 gap-2">
-        {/* Problems Section */}
-        <div>
-          {problems.length > 0 ? (
-            problems.map((problem) => (
-              <div key={problem.id} className="mb-2">
+    <>
+      <div className="problem-component-wrapper">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+          
+          {/* Problems List */}
+          <div>
+            <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 dark:text-neutral-500 mb-4 ml-1">
+                Problems
+            </h3>
+            {problems.length > 0 ? (
+              problems.map((problem) => (
                 <Accordion
+                  key={problem.id}
                   title={
-                    <a
-                      href={problem.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`hover:underline text-white`}
-                    >
+                    <a href={problem.url} target="_blank" rel="noopener noreferrer">
                       {problem.title}
                     </a>
                   }
                   description={problem.description}
                   tagArr={problem.tagArr}
                   theme={theme}
-                  setError={() => { }} // No error handling needed for public view
+                  onExpand={() => handleExpandProblem(problem)}
                 />
+              ))
+            ) : (
+              <div className="glass-panel p-6 text-center text-sm italic text-gray-500 rounded-2xl">
+                No problems in this section.
               </div>
-            ))
-          ) : (
-            <div className="text-center text-sm italic">No problems available.</div>
-          )}
-        </div>
+            )}
+          </div>
 
-        {/* Notes Section */}
-        <div className={`p-2 mr-35 rounded-lg ${theme === 'dark' ? 'bg-gray-700' : 'bg-gray-100'}`}>
-          <MarkdownRenderer content={note} theme={theme} />
+          {/* Notes Section */}
+          <div className="flex flex-col">
+             <h3 className="text-xs font-black uppercase tracking-[0.2em] text-gray-400 dark:text-neutral-500 mb-4 ml-1">
+                Concept Notes
+            </h3>
+            <div className="glass-panel rounded-2xl overflow-hidden flex flex-col">
+                <div className="notes-scroll-box custom-scrollbar !max-h-[350px]">
+                    <MarkdownRenderer content={note} theme={theme} />
+                </div>
+                <div className="accordion-actions">
+                    <button className="btn-expand w-full justify-center" onClick={handleExpandNotes}>
+                        <span className="material-icons text-xs">open_in_full</span>
+                        Expand Notes
+                    </button>
+                </div>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+
+      <ExpandModal
+        isOpen={!!expandedContent}
+        onClose={handleClose}
+        title={expandedContent?.title || ''}
+        description={expandedContent?.description || ''}
+        tagArr={expandedContent?.tagArr || []}
+        theme={theme}
+      />
+    </>
   );
 };
 
