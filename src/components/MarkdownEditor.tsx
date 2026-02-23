@@ -10,6 +10,7 @@ interface MarkdownEditorProps {
 
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme }) => {
   const [isPreview, setIsPreview] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const historyRef = useRef<string[]>([value]);
   const historyIndexRef = useRef<number>(0);
@@ -58,18 +59,70 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
       isUndoingRef.current = false;
       return;
     }
-    
     const timeout = setTimeout(() => {
       pushToHistory(value);
     }, 500);
-
     return () => clearTimeout(timeout);
   }, [value]);
+
+  // --- NEW: Helper to wrap selected text (for Bold, Italic, etc.) ---
+  const applyFormatting = (prefix: string, suffix: string = prefix, defaultText: string = "") => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const text = textarea.value;
+
+    const before = text.substring(0, start);
+    const selected = text.substring(start, end);
+    const after = text.substring(end);
+
+    const isTextSelected = start !== end;
+    const textToInsert = isTextSelected ? selected : defaultText;
+    const updatedValue = before + prefix + textToInsert + suffix + after;
+
+    updateValue(updatedValue, true);
+
+    setTimeout(() => {
+      textarea.focus();
+      if (isTextSelected || defaultText) {
+        // Highlight the text (either originally selected or default placeholder)
+        textarea.selectionStart = start + prefix.length;
+        textarea.selectionEnd = start + prefix.length + textToInsert.length;
+      } else {
+        // Just place cursor in between the wrappers
+        textarea.selectionStart = textarea.selectionEnd = start + prefix.length;
+      }
+    }, 0);
+  };
+
+  // --- NEW: Helper to insert at the beginning of the current line (for Lists & Headings) ---
+  const insertAtLineStart = (prefix: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+    
+    const start = textarea.selectionStart;
+    const text = textarea.value;
+    const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+    
+    const before = text.substring(0, lineStart);
+    const after = text.substring(lineStart);
+    
+    updateValue(before + prefix + after, true);
+    
+    setTimeout(() => {
+      textarea.focus();
+      textarea.selectionStart = textarea.selectionEnd = start + prefix.length;
+    }, 0);
+  };
+
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.target as HTMLTextAreaElement;
     const { selectionStart, selectionEnd, value: text } = textarea;
 
+    // --- Undo / Redo Shortcuts ---
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
       e.preventDefault();
       if (e.shiftKey) handleRedo();
@@ -82,6 +135,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
       return;
     }
 
+    // --- Auto-closing & Wrapping Configuration ---
     const pairs: Record<string, string> = {
       "(": ")",
       "[": "]",
@@ -92,7 +146,14 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
       "$": "$",
     };
 
+    const selectionWrapPairs: Record<string, string> = {
+      "*": "*",
+      "_": "_",
+      "~": "~",
+    };
+
     const closingChars = [")", "]", "}", '"', "'", "`", "$"];
+    
     if (
       closingChars.includes(e.key) &&
       selectionStart === selectionEnd &&
@@ -105,10 +166,10 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
       return;
     }
 
-    if (pairs[e.key]) {
+    if (pairs[e.key] || (selectionWrapPairs[e.key] && selectionStart !== selectionEnd)) {
       e.preventDefault();
       const openChar = e.key;
-      const closeChar = pairs[openChar];
+      const closeChar = pairs[openChar] || selectionWrapPairs[openChar];
 
       if (selectionStart !== selectionEnd) {
         const selectedText = text.substring(selectionStart, selectionEnd);
@@ -138,8 +199,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
 
     if (e.key === "Tab") {
       e.preventDefault();
-      const updatedValue =
-        text.substring(0, selectionStart) + "    " + text.substring(selectionEnd);
+      const updatedValue = text.substring(0, selectionStart) + "    " + text.substring(selectionEnd);
       updateValue(updatedValue, true);
       setTimeout(() => {
         textarea.selectionStart = textarea.selectionEnd = selectionStart + 4;
@@ -160,7 +220,6 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
 
       const indent = indentMatch ? indentMatch[1] : "";
       const bulletPrefix = bulletMatch ? `${bulletMatch[2]} ` : "";
-
       const isEmptyBullet = bulletMatch && currentLine.trim() === bulletPrefix.trim();
 
       const insert = "\n" + (isEmptyBullet ? indent : indent + bulletPrefix);
@@ -182,21 +241,24 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
     } else if (type === "number") {
       prefix = "1. ";
     } else if (type === "alphabet") {
-      const lines = value.split("\n");
-      const lastLine = lines[lines.length - 1];
-      const match = lastLine.match(/^([a-zA-Z])\.\s/);
-      const nextChar = match
-        ? String.fromCharCode(match[1].charCodeAt(0) + 1)
-        : "a";
+      // Find previous line dynamically from cursor
+      const textarea = textareaRef.current;
+      const text = textarea ? textarea.value : value;
+      const start = textarea ? textarea.selectionStart : text.length;
+      
+      const lineStart = text.lastIndexOf('\n', start - 1) + 1;
+      const prevLineStart = text.lastIndexOf('\n', lineStart - 2) + 1;
+      const prevLine = text.substring(prevLineStart, lineStart - 1);
+      
+      const match = prevLine.match(/^([a-zA-Z])\.\s/);
+      const nextChar = match ? String.fromCharCode(match[1].charCodeAt(0) + 1) : "a";
       prefix = `${nextChar}. `;
     }
-    const updatedValue = value.endsWith("\n") ? value : value + "\n";
-    updateValue(updatedValue + prefix, true);
+    insertAtLineStart(prefix);
   };
 
   const handleAddHeading = (level: number) => {
-    const prefix = "#".repeat(level) + " ";
-    updateValue(value + "\n" + prefix, true);
+    insertAtLineStart("#".repeat(level) + " ");
   };
 
   return (
@@ -251,21 +313,21 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
           <div className="flex space-x-1">
             <button
               className="editor-btn font-mono font-bold"
-              onClick={() => updateValue(value + "**bold**", true)}
+              onClick={() => applyFormatting("**", "**", "bold")}
               title="Bold"
             >
               B
             </button>
             <button
               className="editor-btn font-mono italic"
-              onClick={() => updateValue(value + "*italic*", true)}
+              onClick={() => applyFormatting("*", "*", "italic")}
               title="Italic"
             >
               I
             </button>
             <button
               className="editor-btn font-mono"
-              onClick={() => updateValue(value + "`code`", true)}
+              onClick={() => applyFormatting("`", "`", "code")}
               title="Inline Code"
             >
               {"</>"}
@@ -286,7 +348,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
             </button>
             <button
               className="editor-btn font-serif"
-              onClick={() => updateValue(value + "\n$$ $$\n", true)}
+              onClick={() => applyFormatting("$$\n", "\n$$", "equation")}
               title="Insert Math Equation"
             >
               Σ
@@ -302,6 +364,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
           </div>
         ) : (
           <textarea
+            ref={textareaRef}
             value={value}
             onChange={(e) => onChange(e.target.value)}
             onKeyDown={handleKeyDown}
