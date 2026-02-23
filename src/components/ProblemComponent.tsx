@@ -260,6 +260,7 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
                                             </div>
                                         ) : (
                                             <Accordion
+                                                url={problem.url}
                                                 title={
                                                     <span className="font-semibold text-gray-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
                                                         {problem.title}

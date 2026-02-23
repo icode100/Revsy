@@ -4,6 +4,7 @@ import { summarizeText } from '../services/ai';
 
 interface AccordionProps {
     title: React.ReactNode;
+    url: string;
     description: string;
     tagArr: string[],
     theme?: "dark" | "light";
@@ -11,7 +12,7 @@ interface AccordionProps {
     onExpand: () => void;
 }
 
-const Accordion: React.FC<AccordionProps> = ({ title, tagArr, description, theme, setError, onExpand }) => {
+const Accordion: React.FC<AccordionProps> = ({ url, title, tagArr, description, theme, setError, onExpand }) => {
     const [isOpen, setIsOpen] = React.useState(false);
     const [loading, setLoading] = React.useState(false);
     const [isSummarizing, setIsSummarizing] = React.useState(false);
@@ -76,7 +77,7 @@ const Accordion: React.FC<AccordionProps> = ({ title, tagArr, description, theme
             >
                 <div className="flex items-center justify-between w-full">
                     <span className='font-medium text-lg text-gray-900 dark:text-gray-100 group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors'>
-                        {title}
+                        <a href={url}>{title}</a>
                     </span>
                     
                     <div className="flex items-center gap-3">
