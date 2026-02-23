@@ -166,7 +166,7 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                     <div className="p-6 border-t border-gray-200 dark:border-white/10">
                         <p className="text-xs text-center text-gray-400 dark:text-gray-600">
                             &copy; 2026 icode100 <br />
-                            v2.0.0 <br />
+                            v2.0.1 <br />
                             made with &#10084; by the <a href="https://icode100.github.io">icode100</a>
                         </p>
                     </div>
