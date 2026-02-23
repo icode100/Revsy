@@ -1,60 +1,173 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import "katex/dist/katex.min.css";
 import MarkdownRenderer from "./MarkdownRenderer";
 
 interface MarkdownEditorProps {
   value: string;
   onChange: (value: string) => void;
-  theme: "dark" | "light"
+  theme: "dark" | "light";
 }
 
 const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme }) => {
   const [isPreview, setIsPreview] = useState(false);
 
-  // Function to handle the Tab key press
+  const historyRef = useRef<string[]>([value]);
+  const historyIndexRef = useRef<number>(0);
+  const isUndoingRef = useRef<boolean>(false);
+
+  const pushToHistory = (val: string) => {
+    const hist = historyRef.current;
+    const idx = historyIndexRef.current;
+    if (hist[idx] === val) return;
+    
+    const newHist = hist.slice(0, idx + 1);
+    newHist.push(val);
+    if (newHist.length > 50) newHist.shift();
+    
+    historyRef.current = newHist;
+    historyIndexRef.current = newHist.length - 1;
+  };
+
+  const handleUndo = () => {
+    if (historyIndexRef.current > 0) {
+      isUndoingRef.current = true;
+      historyIndexRef.current -= 1;
+      onChange(historyRef.current[historyIndexRef.current]);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      isUndoingRef.current = true;
+      historyIndexRef.current += 1;
+      onChange(historyRef.current[historyIndexRef.current]);
+    }
+  };
+
+  const updateValue = (newValue: string, saveInstantly = false) => {
+    if (saveInstantly) {
+      pushToHistory(value);
+      pushToHistory(newValue);
+      isUndoingRef.current = true;
+    }
+    onChange(newValue);
+  };
+
+  useEffect(() => {
+    if (isUndoingRef.current) {
+      isUndoingRef.current = false;
+      return;
+    }
+    
+    const timeout = setTimeout(() => {
+      pushToHistory(value);
+    }, 500);
+
+    return () => clearTimeout(timeout);
+  }, [value]);
+
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     const textarea = e.target as HTMLTextAreaElement;
     const { selectionStart, selectionEnd, value: text } = textarea;
 
-    // Handle Tab key for indentation
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z') {
+      e.preventDefault();
+      if (e.shiftKey) handleRedo();
+      else handleUndo();
+      return;
+    }
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y') {
+      e.preventDefault();
+      handleRedo();
+      return;
+    }
+
+    const pairs: Record<string, string> = {
+      "(": ")",
+      "[": "]",
+      "{": "}",
+      '"': '"',
+      "'": "'",
+      "`": "`",
+      "$": "$",
+    };
+
+    const closingChars = [")", "]", "}", '"', "'", "`", "$"];
+    if (
+      closingChars.includes(e.key) &&
+      selectionStart === selectionEnd &&
+      text.charAt(selectionStart) === e.key
+    ) {
+      e.preventDefault();
+      setTimeout(() => {
+        textarea.selectionStart = textarea.selectionEnd = selectionStart + 1;
+      }, 0);
+      return;
+    }
+
+    if (pairs[e.key]) {
+      e.preventDefault();
+      const openChar = e.key;
+      const closeChar = pairs[openChar];
+
+      if (selectionStart !== selectionEnd) {
+        const selectedText = text.substring(selectionStart, selectionEnd);
+        const before = text.substring(0, selectionStart);
+        const after = text.substring(selectionEnd);
+
+        const updatedValue = before + openChar + selectedText + closeChar + after;
+        updateValue(updatedValue, true);
+
+        setTimeout(() => {
+          textarea.selectionStart = selectionStart + 1;
+          textarea.selectionEnd = selectionEnd + 1;
+        }, 0);
+      } else {
+        const before = text.substring(0, selectionStart);
+        const after = text.substring(selectionEnd);
+
+        const updatedValue = before + openChar + closeChar + after;
+        updateValue(updatedValue, true);
+
+        setTimeout(() => {
+          textarea.selectionStart = textarea.selectionEnd = selectionStart + 1;
+        }, 0);
+      }
+      return;
+    }
+
     if (e.key === "Tab") {
       e.preventDefault();
       const updatedValue =
         text.substring(0, selectionStart) + "    " + text.substring(selectionEnd);
-      onChange(updatedValue);
+      updateValue(updatedValue, true);
       setTimeout(() => {
         textarea.selectionStart = textarea.selectionEnd = selectionStart + 4;
       }, 0);
       return;
     }
 
-    // Handle Enter key for auto-bullet or indent
     if (e.key === "Enter") {
       e.preventDefault();
 
-      // Get current line until cursor
       const beforeCursor = text.substring(0, selectionStart);
       const afterCursor = text.substring(selectionEnd);
       const lines = beforeCursor.split("\n");
       const currentLine = lines[lines.length - 1];
 
-      const indentMatch = currentLine.match(/^(\s*)/); // leading spaces/tabs
+      const indentMatch = currentLine.match(/^(\s*)/);
       const bulletMatch = currentLine.match(/^(\s*)([-*+]|\d+\.)\s+/);
 
       const indent = indentMatch ? indentMatch[1] : "";
       const bulletPrefix = bulletMatch ? `${bulletMatch[2]} ` : "";
 
-      // If it's an empty bullet, remove the prefix instead of continuing it
       const isEmptyBullet = bulletMatch && currentLine.trim() === bulletPrefix.trim();
 
-      const insert =
-        "\n" + (isEmptyBullet ? indent : indent + bulletPrefix);
-
+      const insert = "\n" + (isEmptyBullet ? indent : indent + bulletPrefix);
       const updatedValue = beforeCursor + insert + afterCursor;
 
-      onChange(updatedValue);
+      updateValue(updatedValue, true);
 
-      // Set cursor after inserted prefix
       setTimeout(() => {
         const pos = selectionStart + insert.length;
         textarea.selectionStart = textarea.selectionEnd = pos;
@@ -62,8 +175,6 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
     }
   };
 
-
-  // Add list button handler
   const handleAddList = (type: "bullet" | "number" | "alphabet") => {
     let prefix = "";
     if (type === "bullet") {
@@ -80,13 +191,12 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
       prefix = `${nextChar}. `;
     }
     const updatedValue = value.endsWith("\n") ? value : value + "\n";
-    onChange(updatedValue + prefix);
+    updateValue(updatedValue + prefix, true);
   };
 
-  // Add heading handler
   const handleAddHeading = (level: number) => {
     const prefix = "#".repeat(level) + " ";
-    onChange(value + "\n" + prefix);
+    updateValue(value + "\n" + prefix, true);
   };
 
   return (
@@ -116,7 +226,15 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
         </div>
 
         <div className="flex flex-wrap gap-2 items-center">
-          {/* Heading levels */}
+          <div className="flex space-x-1 border-r border-gray-300 dark:border-white/10 pr-2">
+            <button className="editor-btn" onClick={handleUndo} title="Undo (Ctrl+Z)">
+              <span className="material-icons text-sm">undo</span>
+            </button>
+            <button className="editor-btn" onClick={handleRedo} title="Redo (Ctrl+Y)">
+              <span className="material-icons text-sm">redo</span>
+            </button>
+          </div>
+
           <div className="flex space-x-1 border-r border-gray-300 dark:border-white/10 pr-2">
             {[1, 2, 3].map((level) => (
               <button
@@ -130,25 +248,24 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
             ))}
           </div>
 
-          {/* Formatting buttons */}
           <div className="flex space-x-1">
             <button
               className="editor-btn font-mono font-bold"
-              onClick={() => onChange(value + "**bold**")}
+              onClick={() => updateValue(value + "**bold**", true)}
               title="Bold"
             >
               B
             </button>
             <button
               className="editor-btn font-mono italic"
-              onClick={() => onChange(value + "*italic*")}
+              onClick={() => updateValue(value + "*italic*", true)}
               title="Italic"
             >
               I
             </button>
             <button
               className="editor-btn font-mono"
-              onClick={() => onChange(value + "`code`")}
+              onClick={() => updateValue(value + "`code`", true)}
               title="Inline Code"
             >
               {"</>"}
@@ -169,7 +286,7 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
             </button>
             <button
               className="editor-btn font-serif"
-              onClick={() => onChange(value + "\n$$ $$\n")}
+              onClick={() => updateValue(value + "\n$$ $$\n", true)}
               title="Insert Math Equation"
             >
               Σ
