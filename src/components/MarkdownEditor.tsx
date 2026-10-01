@@ -221,8 +221,11 @@ const MarkdownEditor: React.FC<MarkdownEditorProps> = ({ value, onChange, theme 
       const indent = indentMatch ? indentMatch[1] : "";
       const bulletPrefix = bulletMatch ? `${bulletMatch[2]} ` : "";
       const isEmptyBullet = bulletMatch && currentLine.trim() === bulletPrefix.trim();
+      const nextBulletPrefix = bulletMatch && /^\d+\.$/.test(bulletMatch[2])
+        ? `${parseInt(bulletMatch[2], 10) + 1}. `
+        : bulletPrefix;
 
-      const insert = "\n" + (isEmptyBullet ? indent : indent + bulletPrefix);
+      const insert = "\n" + (isEmptyBullet ? indent : indent + nextBulletPrefix);
       const updatedValue = beforeCursor + insert + afterCursor;
 
       updateValue(updatedValue, true);
