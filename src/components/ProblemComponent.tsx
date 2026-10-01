@@ -71,9 +71,21 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
     };
 
     const handleSave = () => {
-        onProblemsChange(id, editedProblems);
+        const normalizedProblems = editedProblems.map(problem => ({
+            ...problem,
+            tagArr: splitAndStrip(problem.tagArr.join(',')),
+        }));
+        setProblems(normalizedProblems);
+        onProblemsChange(id, normalizedProblems);
         onNoteChange(id, editedNote);
         setEditMode(false);
+    };
+
+    const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+        if (editMode && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 's') {
+            event.preventDefault();
+            if (!event.repeat && !globalModalOpen) handleSave();
+        }
     };
 
     // Generic handler to open ExpandModal
@@ -146,7 +158,10 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
             />
 
             {/* --- Main Component --- */}
-            <div className={`problem-component-wrapper ${globalModalOpen ? "blur-md" : ""}`}>
+            <div
+                className={`problem-component-wrapper ${globalModalOpen ? "blur-md" : ""}`}
+                onKeyDown={handleKeyDown}
+            >
                 
                 {/* --- Header / Actions Toolbar --- */}
                 <div className="absolute top-6 right-8 flex items-center gap-2 z-20">
@@ -154,7 +169,8 @@ const ProblemComponent: React.FC<ProblemComponentProps> = ({ id, problems, note,
                          <button
                             className="btn-glass-action btn-action-save"
                             onClick={handleSave}
-                            title="Save Changes"
+                            title="Save Changes (Ctrl+S / Cmd+S)"
+                            aria-keyshortcuts="Control+s Meta+s"
                         >
                             <span className="material-icons">check</span>
                             <span className="ml-2 font-medium">Save</span>

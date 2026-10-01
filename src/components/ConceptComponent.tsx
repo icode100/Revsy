@@ -28,12 +28,19 @@ const ConceptComponent: React.FC<ConceptComponentProps> = ({
   const [editedDescription, setEditedDescription] = useState(description);
   const [isExpanded, setIsExpanded] = useState(false);
   
-  const { openModal, closeModal } = useModal();
+  const { globalModalOpen, openModal, closeModal } = useModal();
 
   const handleSave = () => {
     onTitleChange(id, editedTitle);
     onDescriptionChange(id, editedDescription);
     setIsEditing(false);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if (isEditing && (event.ctrlKey || event.metaKey) && !event.altKey && !event.shiftKey && event.key.toLowerCase() === 's') {
+      event.preventDefault();
+      if (!event.repeat && !globalModalOpen) handleSave();
+    }
   };
 
   const handleEdit = () => {
@@ -54,7 +61,10 @@ const ConceptComponent: React.FC<ConceptComponentProps> = ({
 
   return (
     <>
-      <div className="glass-panel rounded-2xl p-6 mb-6 relative transition-all duration-300 hover:shadow-2xl">
+      <div
+        className="glass-panel rounded-2xl p-6 mb-6 relative transition-all duration-300 hover:shadow-2xl"
+        onKeyDown={handleKeyDown}
+      >
         
         {/* --- Header & Actions --- */}
         <div className="flex justify-between items-start mb-4 gap-4">
@@ -80,7 +90,8 @@ const ConceptComponent: React.FC<ConceptComponentProps> = ({
               <button
                 onClick={handleSave}
                 className="btn-glass-action btn-action-save"
-                title="Save Changes"
+                title="Save Changes (Ctrl+S / Cmd+S)"
+                aria-keyshortcuts="Control+s Meta+s"
               >
                 <span className='material-icons'>check</span>
               </button>
