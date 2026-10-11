@@ -1,0 +1,8 @@
+# Lightweight local runtime; Gemini runs remotely, Firebase uses local emulators.
+# Versions verified with the local Firebase emulator integration.
+fastapi==0.143.0
+uvicorn==0.34.3
+httpx==0.28.1
+Pillow==12.3.0
+pypdf==6.10.0
+pypdfium2==5.13.0

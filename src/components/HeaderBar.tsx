@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import UserIconSlider from './UserIconSlider';
 import type { PageDef } from '../pages/MainPage';
 import { useModal } from './ModalContext';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { saveUserTheme } from '../services/firestore';
 import type { User } from "firebase/auth";
 import Logo from './Logo';
@@ -142,6 +142,14 @@ const HeaderBar: React.FC<HeaderBarProps> = ({
                             <span className="font-semibold text-lg">Home</span>
                         </a>
                         
+                        <Link to="/quizzes" onClick={() => { setIsNavOpen(false); closeModal(); }}
+                            className="group flex items-center gap-4 px-4 py-4 rounded-2xl transition-all mb-2 hover:bg-gray-100 text-gray-600 hover:text-black dark:hover:bg-neutral-800 dark:text-gray-300 dark:hover:text-white">
+                            <span className="p-2 rounded-lg bg-blue-100 dark:bg-blue-900/30">
+                                <span className="material-icons text-lg">quiz</span>
+                            </span>
+                            <span className="font-semibold text-lg">Quizzes</span>
+                        </Link>
+
                         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-white/10">
                             <div className="px-4 mb-4 flex items-center gap-2">
                                 <span className="material-icons text-sm opacity-50">folder_open</span>

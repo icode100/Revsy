@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { lazy, Suspense, useEffect, useState } from "react";
 import {
   BrowserRouter,
   Routes,
@@ -27,6 +27,8 @@ import {
   deletePageAndComponents,
   getUserTheme,
 } from "./services/firestore";
+
+const QuizPage = lazy(() => import('./pages/QuizPage'));
 
 function App() {
   const [theme, setTheme] = useState<"dark" | "light">("light");
@@ -254,6 +256,18 @@ function App() {
                                 alert={alert}
                                 setAlert={setAlert}
                             />
+                        </>
+                    }
+                />
+
+                <Route
+                    path="/quizzes"
+                    element={
+                        <>
+                            <HeaderBar {...headerProps} />
+                            <Suspense fallback={<main className="page-container" role="status">Loading quizzes…</main>}>
+                                <QuizPage user={user} theme={theme} />
+                            </Suspense>
                         </>
                     }
                 />

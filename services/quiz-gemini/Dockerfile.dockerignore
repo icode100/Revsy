@@ -1,0 +1,9 @@
+**
+!services/
+!services/quiz-parser/
+!services/quiz-parser/quiz_parser/
+!services/quiz-parser/quiz_parser/*.py
+!services/quiz-gemini/
+!services/quiz-gemini/requirements.txt
+!services/quiz-gemini/quiz_gemini/
+!services/quiz-gemini/quiz_gemini/*.py

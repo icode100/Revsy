@@ -23,3 +23,17 @@ dist-ssr
 *.sln
 *.sw?
 .env
+
+# Quiz services and local server credentials
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.test-deps/
+.test-wheels/
+.deployment/
+.env.*
+!.env.example
+!.env.deploy.example
+*service-account*.json
+*firebase-adminsdk*.json

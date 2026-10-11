@@ -1,0 +1,89 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    match /users/{userId} {
+
+      allow read, write: if request.auth != null && request.auth.uid == userId;
+
+      match /pages/{pageId} {
+
+        allow read: if resource.data.isPublic == true
+                    || (request.auth != null && request.auth.uid == userId);
+
+        allow write: if request.auth != null && request.auth.uid == userId;
+
+        match /components/{componentId} {
+
+          allow read: if
+            get(/databases/$(database)/documents/users/$(userId)/pages/$(pageId))
+              .data.isPublic == true
+            || (request.auth != null && request.auth.uid == userId);
+
+          allow write: if request.auth != null && request.auth.uid == userId;
+        }
+      }
+    }
+
+    // BEGIN REVSY QUIZ RULES FIRESTORE V1
+    // ADDITIVE SNIPPET: merge inside your existing
+    // service cloud.firestore { match /databases/{database}/documents { ... } }
+    // Do not replace the existing rules for notes, concepts, themes, or public pages.
+    match /users/{userId}/quizImports/{importId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      // Imports and parsing results are created only by the authenticated parser service.
+      allow update: if request.auth != null && request.auth.uid == userId
+        && resource.data.status == 'ready'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['savedQuizId'])
+        && request.resource.data.savedQuizId == importId
+        && getAfter(/databases/$(database)/documents/users/$(userId)/quizzes/$(importId)).data.id == importId;
+    }
+
+    match /users/{userId}/quizzes/{quizId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly(['id', 'createdAt', 'schemaVersion', 'title', 'question', 'key', 'source', 'parsing'])
+        && request.resource.data.id == quizId
+        && request.resource.data.schemaVersion in [1, 2]
+        && request.resource.data.createdAt is int
+        && request.resource.data.title is string
+        && request.resource.data.title.size() > 0 && request.resource.data.title.size() <= 160
+        && request.resource.data.question is list
+        && request.resource.data.question.size() > 0 && request.resource.data.question.size() <= 200
+        && request.resource.data.key is list
+        && request.resource.data.key.size() == request.resource.data.question.size()
+        && request.resource.data.source.paperPath == 'users/' + userId + '/quiz-imports/' + quizId + '/paper.pdf'
+        && get(/databases/$(database)/documents/users/$(userId)/quizImports/$(quizId)).data.status == 'ready';
+      // Saved quizzes are immutable, so historical attempts retain the same key.
+      match /attempts/{attemptId} {
+        function quizSchemaVersion() {
+          return get(/databases/$(database)/documents/users/$(userId)/quizzes/$(quizId)).data.schemaVersion;
+        }
+        function validAttemptFields() {
+          let data = request.resource.data;
+          return (quizSchemaVersion() == 1
+              && data.keys().hasOnly(['id', 'quizId', 'answers', 'correct', 'total', 'submittedAt']))
+            || (quizSchemaVersion() == 2
+              && data.keys().hasOnly(['id', 'quizId', 'answers', 'correct', 'total', 'submittedAt', 'score', 'maxScore'])
+              && data.maxScore is int
+              && data.maxScore >= data.total && data.maxScore <= data.total * 2
+              && data.score is number
+              && data.score >= -data.maxScore / 3 - 0.000001
+              && data.score <= data.maxScore);
+        }
+        allow read: if request.auth != null && request.auth.uid == userId;
+        allow create: if request.auth != null && request.auth.uid == userId
+          && validAttemptFields()
+          && request.resource.data.id == attemptId
+          && request.resource.data.quizId == quizId
+          && request.resource.data.answers is list
+          && request.resource.data.total == get(/databases/$(database)/documents/users/$(userId)/quizzes/$(quizId)).data.question.size()
+          && request.resource.data.answers.size() == request.resource.data.total
+          && request.resource.data.correct is int
+          && request.resource.data.correct >= 0 && request.resource.data.correct <= request.resource.data.total
+          && request.resource.data.submittedAt is int;
+      }
+    }
+    // END REVSY QUIZ RULES FIRESTORE V1
+  }
+}

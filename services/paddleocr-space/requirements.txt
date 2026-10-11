@@ -1,0 +1,4 @@
+# Accept the serving plugin's installed versions; do not downgrade the official image.
+fastapi
+httpx
+uvicorn

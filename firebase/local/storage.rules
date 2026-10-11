@@ -1,0 +1,23 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+// ADDITIVE SNIPPET: merge inside your existing
+// service firebase.storage { match /b/{bucket}/o { ... } }
+match /users/{userId}/quiz-imports/{importId}/{filename} {
+  allow read: if request.auth != null && request.auth.uid == userId
+    && filename in ['paper.pdf', 'answer-key.pdf'];
+  allow create: if resource == null
+    && request.auth != null && request.auth.uid == userId
+    && importId.matches('^[A-Za-z0-9_-]{1,80}$')
+    && filename in ['paper.pdf', 'answer-key.pdf']
+    && request.resource.size > 0 && request.resource.size <= 25 * 1024 * 1024
+    && request.resource.contentType == 'application/pdf';
+}
+
+match /users/{userId}/quiz-imports/{importId}/assets/{assetPath=**} {
+  allow read: if request.auth != null && request.auth.uid == userId;
+  // The parser's Admin SDK stores original crops; browser clients cannot overwrite them.
+}
+
+  }
+}

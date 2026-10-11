@@ -1,5 +1,5 @@
 import React, { useEffect, useState, type FormEvent } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useModal } from '../components/ModalContext';
 import { togglePagePublicStatus, isPagePublic } from '../services/firestore';
 import type { signInWithEmail, signOut } from '../services/firebaseAuth';
@@ -120,9 +120,19 @@ const MainPage: React.FC<MainPageProps> = ({ pages, addPage, deletePage, setErro
         <div className="text-center mb-12">
             <h1 className="text-brand text-5xl md:text-7xl mb-4 font-black tracking-tighter">Dashboard</h1>
             <p className="text-gray-500 dark:text-neutral-400 font-medium tracking-wide">
-                Manage your problems and learning concepts
+                Manage your problems, learning concepts, and quizzes
             </p>
         </div>
+
+        <nav aria-label="Dashboard sections" className="flex justify-center gap-2 mb-8">
+          <Link to={user ? `/user/${user.uid}` : '/'} aria-current="page"
+            className="px-6 py-3 rounded-xl bg-white text-purple-600 shadow-md dark:bg-neutral-800 dark:text-purple-400 font-bold">
+            Notes
+          </Link>
+          <Link to="/quizzes" className="px-6 py-3 rounded-xl glass-panel text-gray-600 dark:text-gray-300 font-bold hover:text-blue-500">
+            Quizzes
+          </Link>
+        </nav>
 
         {/* --- Create Bar --- */}
         <div className="flex justify-center mb-20">

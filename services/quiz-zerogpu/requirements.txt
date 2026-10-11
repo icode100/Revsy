@@ -1,0 +1,16 @@
+# Gradio SDK only: ZeroGPU does not support the dedicated Docker/Paddle runtime.
+# Pin the current verified releases; PyTorch 2.13.0 is in HF's supported list.
+gradio==6.30.0
+spaces==0.51.3
+torch==2.13.0
+torchvision==0.28.0
+transformers==5.19.0
+paddleocr[doc-parser]==3.7.0
+paddlex==3.7.2
+numpy>=1.24,<2.4
+Pillow>=11,<13
+# CPU authentication, PDF validation/rendering, original-source asset storage.
+firebase-admin>=6.6,<8
+httpx>=0.28,<1
+pypdf>=5,<7
+pypdfium2>=4.30,<6

@@ -5,9 +5,13 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "dev:local": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "firebase:local": "node scripts/run_local_firebase.mjs",
+    "quiz-parser:local": "node scripts/run_local_quiz_parser.mjs",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:quiz": "node --test tests/*.test.mjs"
   },
   "dependencies": {
     "@langchain/core": "^0.3.56",
@@ -20,6 +24,7 @@
     "katex": "^0.16.22",
     "langchain": "^0.3.26",
     "lodash": "^4.17.21",
+    "pdf-lib": "1.17.1",
     "react": "^19.1.0",
     "react-code-blocks": "^0.1.6",
     "react-dom": "^19.1.0",
